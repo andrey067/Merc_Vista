@@ -3,15 +3,17 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain", "src\Domain\Domain.csproj", "{5D208B3D-391C-4203-A5CE-C101488FB75D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain", "src\Domain\Domain.csproj", "{5D208B3D-391C-4203-A5CE-C101488FB75D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application", "src\Application\Application.csproj", "{2CAFA4BC-D42F-4355-9D58-85691E64256C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Application", "src\Application\Application.csproj", "{2CAFA4BC-D42F-4355-9D58-85691E64256C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure", "src\Infrastructure\Infrastructure.csproj", "{6DE38B5F-E655-49BA-9D46-92055607ED7E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Infrastructure", "src\Infrastructure\Infrastructure.csproj", "{6DE38B5F-E655-49BA-9D46-92055607ED7E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Presentation", "src\Presentation\Presentation.csproj", "{2EDCA4B7-7635-4657-8516-4A3EE3AE933D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Presentation", "src\Presentation\Presentation.csproj", "{2EDCA4B7-7635-4657-8516-4A3EE3AE933D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Merc_Vista_Api", "src\Merc_Vista_Api\Merc_Vista_Api.csproj", "{DC4489C1-C4F0-481F-A6D2-D79DB1538ABE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Merc_Vista_Api", "src\Merc_Vista_Api\Merc_Vista_Api.csproj", "{DC4489C1-C4F0-481F-A6D2-D79DB1538ABE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Merc_Vista.Tests", "src\Tests\Merc_Vista.Tests\Merc_Vista.Tests.csproj", "{126E9130-CE47-4A29-959C-ADD3A526FB07}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{DC4489C1-C4F0-481F-A6D2-D79DB1538ABE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DC4489C1-C4F0-481F-A6D2-D79DB1538ABE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DC4489C1-C4F0-481F-A6D2-D79DB1538ABE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{126E9130-CE47-4A29-959C-ADD3A526FB07}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{126E9130-CE47-4A29-959C-ADD3A526FB07}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{126E9130-CE47-4A29-959C-ADD3A526FB07}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{126E9130-CE47-4A29-959C-ADD3A526FB07}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

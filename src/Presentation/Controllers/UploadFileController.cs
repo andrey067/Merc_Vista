@@ -6,12 +6,11 @@ using Swashbuckle.AspNetCore.Annotations;
 
 namespace Presentation.Controllers
 {
-
     [Route("api/[controller]")]
     [ApiController]
-    public class CarregarArquivosController : BaseController
+    public class UploadFileController: BaseController
     {
-        public CarregarArquivosController(ISender sender) : base(sender) { }
+        public UploadFileController(ISender sender) : base(sender) { }
 
         [HttpPost]
         [Route("upload")]
@@ -22,10 +21,9 @@ namespace Presentation.Controllers
         (
           [FromQuery(Name = "folderPath")]
           [SwaggerParameter("O caminho do diretório que contém os arquivos CSV a serem carregados.")]
-        string folderPath, CancellationToken cancellationToken)
+          string folderPath)
         {
-            var result = await Sender.Send(new UploadFilesCommand(folderPath), cancellationToken);
-
+            var result = await Sender.Send(new UploadFilesCommand(folderPath));
 
             return result.Succeeded ? Ok(result.Data) : BadRequest(result.Errors);
         }
