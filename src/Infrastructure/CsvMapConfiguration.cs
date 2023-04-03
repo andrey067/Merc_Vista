@@ -1,24 +1,23 @@
 ﻿using CsvHelper.Configuration;
 using Domain;
 using Infrastructure.Csv_Converters;
-using System.Globalization;
 
 namespace Infrastructure
 {
     public static class CsvMapConfiguration
     {
-        public sealed class AtivoMap : ClassMap<Ativo>
+        public sealed class AtivoMap: ClassMap<Acao>
         {
             public AtivoMap()
             {
-                Map(m => m.AtivoNome).Name("Ativo");
-                Map(m => m.Data).Name("Data").TypeConverter<ConvertStringToDateTime>();
-                Map(m => m.Abertura).Name("Abertura").TypeConverter<ConvertStringToDecimal>();
-                Map(m => m.Maximo).Name("M�ximo").TypeConverter<ConvertStringToDecimal>();
-                Map(m => m.Minimo).Name("M�nimo").TypeConverter<ConvertStringToDecimal>();
-                Map(m => m.Fechamento).Name("Fechamento").TypeConverter<ConvertStringToDecimal>();
-                Map(m => m.Volume).Name("Volume").TypeConverter<ConvertStringToDecimal>();
-                Map(m => m.Quantidade).Name("Quantidade").TypeConverter<ConvertStringToDecimal>();
+                Map(m => m.Ativo);
+                Map(m => m.Data).TypeConverter<ConvertStringToDateTime>();
+                Map(m => m.Abertura).TypeConverter<ConvertStringToDecimal>();
+                Map(m => m.Maximo).TypeConverter<ConvertStringToDecimal>();
+                Map(m => m.Minimo).TypeConverter<ConvertStringToDecimal>();
+                Map(m => m.Fechamento).TypeConverter<ConvertStringToDecimal>();
+                Map(m => m.Volume).TypeConverter<ConvertStringToDecimal>();
+                Map(m => m.Quantidade).TypeConverter<ConvertStringToDecimal>();
             }
         }
     }

@@ -7,38 +7,76 @@ using Domain;
 using Domain.Shared;
 using Infrastructure;
 using System.Globalization;
+using System.Text;
 
 namespace Application.Handlers
 {
-    public sealed class UploadFileHandler : ICommandHandler<UploadFilesCommand, List<Ativo>>
+    public sealed class UploadFileHandler: ICommandHandler<UploadFilesCommand, List<Acao>>
     {
-        public async Task<Result<List<Ativo>>> Handle(UploadFilesCommand request, CancellationToken cancellationToken)
+        public async Task<Result<List<Acao>>> Handle(UploadFilesCommand request, CancellationToken cancellationToken)
         {
-            var ativos = new List<Ativo>();
+            if(ValidatePathExists(request.path))
+                return Result<List<Acao>>.Failure(new Error("Caminho não encontrato", "Fornecessa um diretorio valido"));
 
             var files = Directory.GetFiles(request.path, "*.csv");
 
-            await files.ToAsyncEnumerable().ParallelForEachAsync(async file =>
-            {
-                using (var reader = new StreamReader(file))
-                using (var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
-                {
-                    Delimiter = ";",
-                    HasHeaderRecord = true,
-                    MissingFieldFound = null,
-                }))
-                {
-                    csv.Context.RegisterClassMap<CsvMapConfiguration.AtivoMap>();
+            if(ValidateExistsFlies(files))
+                return Result<List<Acao>>.Failure(new Error("Não existem arquivos com a extensão .csv", "Fornecessa um diretorio valido"));
 
-                    var records = csv.GetRecords<Ativo>();
-                    ativos = records.ToList();
-                    await foreach (var record in records)
+            var acao = new List<Acao>();
+
+            files.ToList().ForEach(file =>
+                {
+                    using(var reader = new StreamReader(file, Encoding.UTF8))
                     {
-                        Console.WriteLine($"Ativo: {record.AtivoNome}, Data: {record.Data}, Abertura: {record.Abertura}, Máximo: {record.Maximo}, Mínimo: {record.Minimo}, Fechamento: {record.Fechamento}, Volume: {record.Volume}, Quantidade: {record.Quantidade}");
+                        var readerReplaced = ReplaceWrongWords(reader);
+                        using(var csv = new CsvReader(readerReplaced, new CsvConfiguration(CultureInfo.InvariantCulture)
+                        {
+                            HasHeaderRecord = true,
+                            MissingFieldFound = null,
+                            Encoding = Encoding.UTF8,
+                            PrepareHeaderForMatch = (arg) => arg.Header,
+                            DetectDelimiter = true,
+                        }))
+                        {
+                            csv.Context.RegisterClassMap<CsvMapConfiguration.AtivoMap>();
+                            csv.Read();
+                            csv.ReadHeader();
+
+                            if(ValidateHeader(csv))
+                                throw new Exception("Erro ao carregar o arquivo");
+
+                            acao = csv.GetRecords<Acao>().ToList();                            
+                        }
                     }
-                }
-            });
-            return Result<List<Ativo>>.Success(ativos);
+                });
+
+            foreach(var record in acao)
+                Console.WriteLine($"Ativo: {record.Ativo}, Data: {record.Data}, Abertura: {record.Abertura}, Máximo: {record.Maximo}, Mínimo: {record.Minimo}, Fechamento: {record.Fechamento}, Volume: {record.Volume}, Quantidade: {record.Quantidade}");
+
+            return Result<List<Acao>>.Success(acao);
+        }
+
+        private static bool ValidateHeader(CsvReader csv)
+        {
+            var actualHeaders = csv.HeaderRecord!.ToList();
+            var expectedHeaders = typeof(Acao).GetProperties().Select(p => p.Name).ToList();
+            return !expectedHeaders.SequenceEqual(actualHeaders);
+        }
+
+        private static bool ValidatePathExists(string path)
+         => !Directory.Exists(path);
+
+        private static bool ValidateExistsFlies(string[] files)
+         => !(files != null && files.Any());
+
+        private static StringReader ReplaceWrongWords(StreamReader reader)
+        {
+            var csvText = reader.ReadToEnd();
+            csvText = csvText.Replace("M�ximo", "Maximo").Replace("M�nimo", "Minimo");
+            var readerReplaced = new StringReader(csvText);
+
+            return readerReplaced;
         }
     }
 }

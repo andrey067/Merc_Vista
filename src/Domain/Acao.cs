@@ -1,8 +1,8 @@
 ﻿namespace Domain
 {
-    public class Ativo
+    public class Acao
     {
-        public string AtivoNome { get; set; } = string.Empty;
+        public string Ativo { get; set; } = string.Empty;
         public DateTime? Data { get; set; }
         public decimal Abertura { get; set; }
         public decimal Maximo { get; set; }
