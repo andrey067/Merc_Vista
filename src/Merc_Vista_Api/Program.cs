@@ -29,6 +29,11 @@ if (app.Environment.IsDevelopment())
 
 //app.UseSerilogRequestLogging();
 
+app.UseCors(builder => builder
+       .AllowAnyOrigin()
+       .AllowAnyMethod()
+       .AllowAnyHeader());
+
 app.UseAuthorization();
 
 app.MapControllers();

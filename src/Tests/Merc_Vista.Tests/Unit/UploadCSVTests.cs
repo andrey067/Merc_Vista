@@ -1,5 +1,6 @@
 ﻿using Application.Commands;
 using Domain;
+using Domain.Shared;
 using MediatR;
 using Merc_Vista.Tests.Fixtures;
 using Microsoft.AspNetCore.Mvc;
@@ -20,16 +21,18 @@ namespace Merc_Vista.Tests.Unit
             // Arrange
             var mockSender = new Mock<ISender>();
             var commandResult = _resultFixture.SuccessFixture(_fixture.GetList());
-            mockSender.Setup(x => x.Send(It.IsAny<UploadFilesCommand>(), It.IsAny<CancellationToken>())).ReturnsAsync(commandResult);
+            mockSender.Setup(x => x.Send(It.IsAny<UploadFilesDiretoryCommand>(), It.IsAny<CancellationToken>())).ReturnsAsync(commandResult);
             var controller = new UploadFileController(mockSender.Object);
 
             // Act
-            var result = await controller.UploadCSV("some/path") as OkObjectResult;
+            ActionResult<Result<List<Acao>>> result = await controller.UploadCSVDiretory("some/path");
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(200, result.StatusCode);
-            Assert.Equal(commandResult.Data, result.Value);
+            Assert.IsType<OkObjectResult>(result.Result);
+            var okResult = (OkObjectResult)result.Result;
+            Assert.Equal(200, okResult.StatusCode);
+            Assert.Equal(commandResult.Data, okResult.Value);
         }
 
         [Fact]
@@ -38,16 +41,18 @@ namespace Merc_Vista.Tests.Unit
             // Arrange
             var mockSender = new Mock<ISender>();
             var commandResult = _resultFixture.FailureFixture(_errorFixture.NotFoundDiretory());
-            mockSender.Setup(x => x.Send(It.IsAny<UploadFilesCommand>(), It.IsAny<CancellationToken>())).ReturnsAsync(commandResult);
+            mockSender.Setup(x => x.Send(It.IsAny<UploadFilesDiretoryCommand>(), It.IsAny<CancellationToken>())).ReturnsAsync(commandResult);
             var controller = new UploadFileController(mockSender.Object);
 
             // Act
-            var result = await controller.UploadCSV("some/path") as BadRequestObjectResult;
+            var result = await controller.UploadCSVDiretory("some/path");
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(400, result.StatusCode);
-            Assert.Equal(commandResult.Errors, result.Value);
+            Assert.IsType<BadRequestObjectResult>(result.Result);
+            var okResult = (BadRequestObjectResult)result.Result;
+            Assert.Equal(400, okResult.StatusCode);
+            Assert.Equal(commandResult.Errors, okResult.Value);
         }
     }
 }
