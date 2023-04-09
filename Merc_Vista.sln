@@ -13,7 +13,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Presentation", "src\Present
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Merc_Vista_Api", "src\Merc_Vista_Api\Merc_Vista_Api.csproj", "{DC4489C1-C4F0-481F-A6D2-D79DB1538ABE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Merc_Vista.Tests", "src\Tests\Merc_Vista.Tests\Merc_Vista.Tests.csproj", "{126E9130-CE47-4A29-959C-ADD3A526FB07}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Merc_Vista.Tests", "src\Tests\Merc_Vista.Tests\Merc_Vista.Tests.csproj", "{126E9130-CE47-4A29-959C-ADD3A526FB07}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Merc_Vista_Blazor", "src\Merc_Vista_Blazor\Merc_Vista_Blazor.csproj", "{7164807C-F0D6-41FD-A803-8A1F24E747DC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{126E9130-CE47-4A29-959C-ADD3A526FB07}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{126E9130-CE47-4A29-959C-ADD3A526FB07}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{126E9130-CE47-4A29-959C-ADD3A526FB07}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7164807C-F0D6-41FD-A803-8A1F24E747DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7164807C-F0D6-41FD-A803-8A1F24E747DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7164807C-F0D6-41FD-A803-8A1F24E747DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7164807C-F0D6-41FD-A803-8A1F24E747DC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

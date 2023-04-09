@@ -1,0 +1,25 @@
+﻿<Bar Breakpoint="Breakpoint.Desktop" NavigationBreakpoint="Breakpoint.Tablet" ThemeContrast="ThemeContrast.Dark"
+     Mode="BarMode.VerticalInline" CollapseMode="BarCollapseMode.Small">
+    <BarToggler />
+    <BarBrand>
+        <BarItem>            
+            <BarLink To="/">
+                Merc Vista
+            </BarLink>
+        </BarItem>
+    </BarBrand>
+    <BarMenu>
+        <BarStart>
+            <BarItem>
+                <BarLink To="/carregar-arquivos">
+                    <BarIcon IconName="IconName.FileUpload" />
+                    Carregar Arquivos
+                </BarLink>
+            </BarItem>
+        </BarStart>
+    </BarMenu>
+</Bar>
+
+@code {
+    private bool pagesBarVisible = false;    
+}

@@ -1,0 +1,95 @@
+﻿@page "/carregar-arquivos"
+@inject HttpClient httpClient;
+@using System.Net.Http.Headers;
+@using System.Text;
+
+<h3>Carregar Arquivos</h3>
+<Field>
+    <FilePicker @ref="filePickerCustom"
+                Multiple
+                Directory
+                Filter=".csv"
+                Upload="OnFileUpload"
+                ShowMode="FilePickerShowMode.List">
+        <FileTemplate>
+            <Div Flex="Flex.JustifyContent.Between">
+                <Div>
+                    <Heading Size="HeadingSize.Is5">@context.File.Name</Heading>
+                    <Paragraph>@FilePicker.GetFileSizeReadable(context.File)</Paragraph>
+                </Div>
+                <Div>
+                    @{
+                        switch (context.File.Status)
+                        {
+                            case FileEntryStatus.Ready:
+                                <Icon TextColor="TextColor.Primary" Name="IconName.FileUpload" />
+                                break;
+                            case FileEntryStatus.Uploading:
+                                <Icon TextColor="TextColor.Warning" Name="IconName.Bolt" />
+                                break;
+                            case FileEntryStatus.Uploaded:
+                                <Icon TextColor="TextColor.Success" Name="IconName.CheckCircle" />
+                                break;
+                            case FileEntryStatus.Error:
+                                <Icon TextColor="TextColor.Danger" Name="IconName.TimesCircle" />
+                                break;
+                        }
+                    }
+                </Div>
+            </Div>
+            <Divider Margin="Margin.Is0" />
+        </FileTemplate>
+        <ButtonsTemplate>
+            <Progress Value="@filePickerCustom?.GetProgressPercentage()" />
+            <Buttons>
+                <Button Clicked="@context.Clear" Color="Color.Warning"><Icon Name="IconName.Clear" /></Button>
+                <Button Clicked="@context.Upload" Color="Color.Primary"><Icon Name="IconName.FileUpload" /></Button>
+            </Buttons>
+        </ButtonsTemplate>
+    </FilePicker>
+</Field>
+
+@code {
+    private FilePicker? filePickerCustom;
+
+    async Task OnFileUpload(FileUploadEventArgs e)
+    {
+        try
+        {
+            var formData = await CreateFormDataContent(e);
+            var response = await httpClient.PostAsync("UploadFile/upload-csv-file-stream", formData);
+            response.EnsureSuccessStatusCode();
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine(exc.Message);
+        }
+        finally
+        {
+            StateHasChanged();
+        }
+    }
+
+    private async Task<MultipartFormDataContent> CreateFormDataContent(FileUploadEventArgs e)
+    {
+        var formData = new MultipartFormDataContent();
+        formData.Headers.ContentType.MediaType = "multipart/form-data";
+        var fileContent = await GetFileContentAsync(e.File);
+        formData.Add(fileContent, "file", e.File.Name);
+        return formData;
+    }
+
+    private async Task<ByteArrayContent> GetFileContentAsync(IFileEntry file)
+    {
+        using (var memoryStream = new MemoryStream())
+        {
+            var buffer = new byte[file.Size];
+            await file.OpenReadStream().ReadAsync(buffer);
+
+            var fileContent = new ByteArrayContent(buffer);
+            fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(file.Type);
+
+            return fileContent;
+        }
+    }
+}
