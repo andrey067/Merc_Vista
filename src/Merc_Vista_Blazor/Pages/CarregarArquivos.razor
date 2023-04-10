@@ -2,13 +2,14 @@
 @inject HttpClient httpClient;
 @using System.Net.Http.Headers;
 @using System.Text;
+@using Merc_Vista_Blazor.ViewModel;
 
 <h3>Carregar Arquivos</h3>
 <Field>
     <FilePicker @ref="filePickerCustom"
                 Multiple
                 Directory
-                Filter=".csv"
+                Filter="*.csv"
                 Upload="OnFileUpload"
                 ShowMode="FilePickerShowMode.List">
         <FileTemplate>
@@ -19,21 +20,9 @@
                 </Div>
                 <Div>
                     @{
-                        switch (context.File.Status)
-                        {
-                            case FileEntryStatus.Ready:
-                                <Icon TextColor="TextColor.Primary" Name="IconName.FileUpload" />
-                                break;
-                            case FileEntryStatus.Uploading:
-                                <Icon TextColor="TextColor.Warning" Name="IconName.Bolt" />
-                                break;
-                            case FileEntryStatus.Uploaded:
-                                <Icon TextColor="TextColor.Success" Name="IconName.CheckCircle" />
-                                break;
-                            case FileEntryStatus.Error:
-                                <Icon TextColor="TextColor.Danger" Name="IconName.TimesCircle" />
-                                break;
-                        }
+                        <Div>
+                            <Icon TextColor="@GetTextColorForFileStatus(context.File.Status)" Name="@GetIconForFileStatus(context.File.Status)" />
+                        </Div>
                     }
                 </Div>
             </Div>
@@ -52,17 +41,23 @@
 @code {
     private FilePicker? filePickerCustom;
 
-    async Task OnFileUpload(FileUploadEventArgs e)
+    async Task OnFileUpload(FileUploadEventArgs file)
     {
+        file.File.Status = FileEntryStatus.Uploading;
         try
         {
-            var formData = await CreateFormDataContent(e);
+            var formData = await CreateFormDataContent(file);
             var response = await httpClient.PostAsync("UploadFile/upload-csv-file-stream", formData);
+            if (response.IsSuccessStatusCode)
+                file.File.Status = FileEntryStatus.Uploaded;
+            else
+                file.File.Status = FileEntryStatus.Error;
+
             response.EnsureSuccessStatusCode();
         }
         catch (Exception exc)
         {
-            Console.WriteLine(exc.Message);
+            file.File.Status = FileEntryStatus.Error;
         }
         finally
         {
@@ -73,7 +68,7 @@
     private async Task<MultipartFormDataContent> CreateFormDataContent(FileUploadEventArgs e)
     {
         var formData = new MultipartFormDataContent();
-        formData.Headers.ContentType.MediaType = "multipart/form-data";
+        formData.Headers.ContentType!.MediaType = "multipart/form-data";
         var fileContent = await GetFileContentAsync(e.File);
         formData.Add(fileContent, "file", e.File.Name);
         return formData;
@@ -81,15 +76,30 @@
 
     private async Task<ByteArrayContent> GetFileContentAsync(IFileEntry file)
     {
-        using (var memoryStream = new MemoryStream())
+        var buffer = new byte[file.Size];
+        await file.OpenReadStream().ReadAsync(buffer);
+        var fileContent = new ByteArrayContent(buffer);
+        fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(file.Type);
+        return fileContent;
+    }   
+
+    private IconName GetIconForFileStatus(FileEntryStatus status) =>
+     status switch
+     {
+         FileEntryStatus.Ready => IconName.FileUpload,
+         FileEntryStatus.Uploading => IconName.Bolt,
+         FileEntryStatus.Uploaded => IconName.CheckCircle,
+         FileEntryStatus.Error => IconName.TimesCircle,
+         _ => IconName.TimesCircle
+     };
+
+    private TextColor GetTextColorForFileStatus(FileEntryStatus status) =>
+        status switch
         {
-            var buffer = new byte[file.Size];
-            await file.OpenReadStream().ReadAsync(buffer);
-
-            var fileContent = new ByteArrayContent(buffer);
-            fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(file.Type);
-
-            return fileContent;
-        }
-    }
+            FileEntryStatus.Ready => TextColor.Primary,
+            FileEntryStatus.Uploading => TextColor.Warning,
+            FileEntryStatus.Uploaded => TextColor.Success,
+            FileEntryStatus.Error => TextColor.Danger,
+            _ => TextColor.Dark
+        };
 }
