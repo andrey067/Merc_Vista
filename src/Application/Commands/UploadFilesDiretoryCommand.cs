@@ -3,5 +3,5 @@ using Domain;
 
 namespace Application.Commands
 {
-    public sealed record class UploadFilesDiretoryCommand(string path) : ICommand<List<Acao>>;
+    public sealed record class UploadFilesDiretoryCommand(string path) : ICommand;
 }
