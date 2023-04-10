@@ -4,6 +4,7 @@ using CsvHelper;
 using CsvHelper.Configuration;
 using Dasync.Collections;
 using Domain;
+using Domain.Interfaces;
 using Domain.Shared;
 using Infrastructure;
 using System.Globalization;
@@ -11,56 +12,56 @@ using System.Text;
 
 namespace Application.Handlers
 {
-    public sealed class UploadFileDirectoryHandler: ICommandHandler<UploadFilesDiretoryCommand, List<Acao>>
+    public sealed class UploadFileDirectoryHandler: ICommandHandler<UploadFilesDiretoryCommand>
     {
-        public async Task<Result<List<Acao>>> Handle(UploadFilesDiretoryCommand request, CancellationToken cancellationToken)
+        private readonly IAcaoRepository _repository;
+
+        public UploadFileDirectoryHandler(IAcaoRepository repository) => _repository = repository;
+
+        public async Task<Result> Handle(UploadFilesDiretoryCommand request, CancellationToken cancellationToken)
         {
-            if(ValidatePathExists(request.path))
-                return Result<List<Acao>>.Failure(new Error("Caminho não encontrato", "Fornecessa um diretorio valido"));
+            if (ValidatePathExists(request.path))
+                return Result<Task>.Failure(new Error("Caminho não encontrato", "Fornecessa um diretorio valido"));
 
             var files = Directory.GetFiles(request.path, "*.csv");
 
-            if(ValidateExistsFiles(files))
-                return Result<List<Acao>>.Failure(new Error("Não existem arquivos com a extensão .csv", "Fornecessa um diretorio valido"));
+            if (ValidateExistsFiles(files))
+                return Result<Task>.Failure(new Error("Não existem arquivos com a extensão .csv", "Fornecessa um diretorio valido"));
 
-            var acao = new List<Acao>();
-
-            files.ToList().ForEach(file =>
+            await files.ToAsyncEnumerable().ParallelForEachAsync(async file =>
+            {
+                using (var reader = new StreamReader(file, Encoding.UTF8))
                 {
-                    using(var reader = new StreamReader(file, Encoding.UTF8))
+                    var readerReplaced = ReplaceWrongWords(reader);
+                    using (var csv = new CsvReader(readerReplaced, new CsvConfiguration(CultureInfo.InvariantCulture)
                     {
-                        var readerReplaced = ReplaceWrongWords(reader);
-                        using(var csv = new CsvReader(readerReplaced, new CsvConfiguration(CultureInfo.InvariantCulture)
-                        {
-                            HasHeaderRecord = true,
-                            MissingFieldFound = null,
-                            Encoding = Encoding.UTF8,
-                            PrepareHeaderForMatch = (arg) => arg.Header,
-                            DetectDelimiter = true,
-                        }))
-                        {
-                            csv.Context.RegisterClassMap<CsvMapConfiguration.AtivoMap>();
-                            csv.Read();
-                            csv.ReadHeader();
+                        HasHeaderRecord = true,
+                        MissingFieldFound = null,
+                        Encoding = Encoding.UTF8,
+                        PrepareHeaderForMatch = (arg) => arg.Header,
+                        DetectDelimiter = true,
+                    }))
+                    {
+                        csv.Context.RegisterClassMap<CsvMapConfiguration.AtivoMap>();
+                        csv.Read();
+                        csv.ReadHeader();
 
-                            if(ValidateHeader(csv))
-                                throw new Exception("Erro ao carregar o arquivo");
+                        if (ValidateHeader(csv))
+                            throw new Exception("Erro ao carregar o arquivo");
 
-                            acao = csv.GetRecords<Acao>().ToList();                            
-                        }
+                        var listaConvertida = csv.GetRecords<Acao>().ToList();
+                        await _repository.InsertRangeAsync(listaConvertida);
                     }
-                });
+                }
+            });
 
-            foreach(var record in acao)
-                Console.WriteLine($"Ativo: {record.Ativo}, Data: {record.Data}, Abertura: {record.Abertura}, Máximo: {record.Maximo}, Mínimo: {record.Minimo}, Fechamento: {record.Fechamento}, Volume: {record.Volume}, Quantidade: {record.Quantidade}");
-
-            return Result<List<Acao>>.Success(acao);
+            return Result.Success();
         }
 
         private static bool ValidateHeader(CsvReader csv)
         {
             var actualHeaders = csv.HeaderRecord!.ToList();
-            var expectedHeaders = typeof(Acao).GetProperties().Select(p => p.Name).ToList();
+            var expectedHeaders = typeof(Acao).GetProperties().Where(p => p.Name != "Id").Select(p => p.Name).ToList();
             return !expectedHeaders.SequenceEqual(actualHeaders);
         }
 
