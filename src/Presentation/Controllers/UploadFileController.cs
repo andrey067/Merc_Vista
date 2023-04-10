@@ -10,7 +10,7 @@ namespace Presentation.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UploadFileController : BaseController
+    public class UploadFileController: BaseController
     {
         public UploadFileController(ISender sender) : base(sender) { }
 
@@ -19,15 +19,15 @@ namespace Presentation.Controllers
         [SwaggerOperation(Summary = "Faz upload de arquivos CSV de um diretório")]
         [SwaggerResponse(StatusCodes.Status200OK)]
         [SwaggerResponse(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<Result<List<Acao>>>> UploadCSVDiretory
+        public async Task<IActionResult> UploadCSVDiretory
         (
           [FromQuery(Name = "folderPath")]
           [SwaggerParameter("O caminho do diretório que contém os arquivos CSV a serem carregados.")]
           string folderPath)
         {
-            Result<List<Acao>>? result = await Sender.Send(new UploadFilesDiretoryCommand(folderPath));
+            var result = await Sender.Send(new UploadFilesDiretoryCommand(folderPath));
 
-            return result.IsSuccess ? Ok(result.Data) : BadRequest(result.Errors);
+            return result.IsSuccess ? Ok(result.IsSuccess) : BadRequest(result.Errors);
         }
 
         [HttpPost]

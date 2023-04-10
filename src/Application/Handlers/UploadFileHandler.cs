@@ -3,6 +3,7 @@ using Application.Interfaces;
 using CsvHelper;
 using CsvHelper.Configuration;
 using Domain;
+using Domain.Interfaces;
 using Domain.Shared;
 using Infrastructure;
 using Microsoft.AspNetCore.Http;
@@ -11,12 +12,17 @@ using System.Text;
 
 namespace Application.Handlers
 {
-    public class UploadFileHandler : ICommandHandler<UploadFileCommand, List<Acao>>
+    public class UploadFileHandler: ICommandHandler<UploadFileCommand, List<Acao>>
     {
-        public Task<Result<List<Acao>>> Handle(UploadFileCommand request, CancellationToken cancellationToken)
+        private readonly IAcaoRepository _acaoRepository;
+
+        public UploadFileHandler(IAcaoRepository acaoRepository)
+         => _acaoRepository = acaoRepository;
+
+        public async Task<Result<List<Acao>>> Handle(UploadFileCommand request, CancellationToken cancellationToken)
         {
             if (ValidateExistsFiles(request.File))
-                return Task.FromResult(Result<List<Acao>>.Failure(new Error("Erro ao emportar o arquivo", "Erro")));
+                return Result<List<Acao>>.Failure(new Error("Erro ao importar o arquivo", "Erro"));
 
             var acao = new List<Acao>();
             using (var reader = new StreamReader(request.File.OpenReadStream(), Encoding.UTF8))
@@ -35,16 +41,14 @@ namespace Application.Handlers
                     csv.ReadHeader();
 
                     if (ValidateHeader(csv))
-                        throw new Exception("Erro ao carregar o arquivo");
+                        return Result<List<Acao>>.Failure(new Error("Erro ao importar o arquivo", "Erro no cabeçalho do arquivo"));
 
-                    acao = csv.GetRecords<Acao>().ToList();
+                    var listaConvertida = csv.GetRecords<Acao>().ToList();
+                    acao.AddRange(await _acaoRepository.InsertRangeAsync(listaConvertida));
                 }
             }
 
-            foreach (var record in acao)
-                Console.WriteLine($"Ativo: {record.Ativo}, Data: {record.Data}, Abertura: {record.Abertura}, Máximo: {record.Maximo}, Mínimo: {record.Minimo}, Fechamento: {record.Fechamento}, Volume: {record.Volume}, Quantidade: {record.Quantidade}");
-
-            return Task.FromResult(Result<List<Acao>>.Success(acao));
+            return Result<List<Acao>>.Success(acao);
         }
 
         private static bool ValidateExistsFiles(IFormFile file)
@@ -62,7 +66,7 @@ namespace Application.Handlers
         private static bool ValidateHeader(CsvReader csv)
         {
             var actualHeaders = csv.HeaderRecord!.ToList();
-            var expectedHeaders = typeof(Acao).GetProperties().Select(p => p.Name).ToList();
+            var expectedHeaders = typeof(Acao).GetProperties().Where(p => p.Name != "Id").Select(p => p.Name).ToList();
             return !expectedHeaders.SequenceEqual(actualHeaders);
         }
     }
