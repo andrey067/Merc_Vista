@@ -25,12 +25,12 @@ namespace Merc_Vista.Tests.Unit
             var controller = new UploadFileController(mockSender.Object);
 
             // Act
-            ActionResult<Result<List<Acao>>> result = await controller.UploadCSVDiretory("some/path");
+            IActionResult result = await controller.UploadCSVDiretory("some/path");
 
             // Assert
             Assert.NotNull(result);
-            Assert.IsType<OkObjectResult>(result.Result);
-            var okResult = (OkObjectResult)result.Result;
+            Assert.IsType<OkObjectResult>(result);
+            var okResult = (OkObjectResult)result;
             Assert.Equal(200, okResult.StatusCode);
             Assert.Equal(commandResult.Data, okResult.Value);
         }
@@ -49,8 +49,8 @@ namespace Merc_Vista.Tests.Unit
 
             // Assert
             Assert.NotNull(result);
-            Assert.IsType<BadRequestObjectResult>(result.Result);
-            var okResult = (BadRequestObjectResult)result.Result;
+            Assert.IsType<BadRequestObjectResult>(result);
+            var okResult = (BadRequestObjectResult)result;
             Assert.Equal(400, okResult.StatusCode);
             Assert.Equal(commandResult.Errors, okResult.Value);
         }

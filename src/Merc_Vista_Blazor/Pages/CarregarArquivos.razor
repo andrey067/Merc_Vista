@@ -1,105 +1,82 @@
 ﻿@page "/carregar-arquivos"
 @inject HttpClient httpClient;
 @using System.Net.Http.Headers;
-@using System.Text;
-@using Merc_Vista_Blazor.ViewModel;
 
-<h3>Carregar Arquivos</h3>
-<Field>
-    <FilePicker @ref="filePickerCustom"
-                Multiple
-                Directory
-                Filter="*.csv"
-                Upload="OnFileUpload"
-                ShowMode="FilePickerShowMode.List">
-        <FileTemplate>
-            <Div Flex="Flex.JustifyContent.Between">
-                <Div>
-                    <Heading Size="HeadingSize.Is5">@context.File.Name</Heading>
-                    <Paragraph>@FilePicker.GetFileSizeReadable(context.File)</Paragraph>
-                </Div>
-                <Div>
-                    @{
-                        <Div>
-                            <Icon TextColor="@GetTextColorForFileStatus(context.File.Status)" Name="@GetIconForFileStatus(context.File.Status)" />
-                        </Div>
-                    }
-                </Div>
-            </Div>
-            <Divider Margin="Margin.Is0" />
-        </FileTemplate>
-        <ButtonsTemplate>
-            <Progress Value="@filePickerCustom?.GetProgressPercentage()" />
-            <Buttons>
-                <Button Clicked="@context.Clear" Color="Color.Warning"><Icon Name="IconName.Clear" /></Button>
-                <Button Clicked="@context.Upload" Color="Color.Primary"><Icon Name="IconName.FileUpload" /></Button>
-            </Buttons>
-        </ButtonsTemplate>
-    </FilePicker>
-</Field>
+<PageTitle>Carregar Arquivos</PageTitle>
 
-@code {
-    private FilePicker? filePickerCustom;
+<MudText Typo="Typo.h3" GutterBottom="true">Carregar Arquivos</MudText>
 
-    async Task OnFileUpload(FileUploadEventArgs file)
+<MudText Class="mb-8">Selecione os arquivos a serem carregados</MudText>
+
+<MudFileUpload T="IReadOnlyList<IBrowserFile>" Accept=".csv" FilesChanged="UploadFiles">
+    <ButtonTemplate>
+        <MudCardActions>
+            <MudButton HtmlTag="label" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.AttachFile" for="@context"> Somente arquivos .csv</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-5" StartIcon="@Icons.Material.Filled.CloudUpload" OnClick="@(async () => await Submit())">Submit</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-5" OnClick="@(() => Reset())">Limpar arquivos</MudButton>
+        </MudCardActions>
+    </ButtonTemplate>
+</MudFileUpload>
+
+@if (files != null)
+{
+    <MudList>
+        @foreach (var file in files)
+        {
+            <MudListItem Icon="@Icons.Material.Filled.AttachFile">
+                @file.Name <code>@file.Size bytes</code>
+            </MudListItem>
+        }
+    </MudList>
+}
+@code
+{
+    IList<IBrowserFile> files = new List<IBrowserFile>();
+    MultipartFormDataContent? formData = new MultipartFormDataContent();
+
+    private async Task UploadFiles(IReadOnlyList<IBrowserFile> files)
     {
-        file.File.Status = FileEntryStatus.Uploading;
-        try
+        foreach (var file in files)
         {
-            var formData = await CreateFormDataContent(file);
-            var response = await httpClient.PostAsync("UploadFile/upload-csv-file-stream", formData);
-            if (response.IsSuccessStatusCode)
-                file.File.Status = FileEntryStatus.Uploaded;
-            else
-                file.File.Status = FileEntryStatus.Error;
-
-            response.EnsureSuccessStatusCode();
-        }
-        catch (Exception exc)
-        {
-            file.File.Status = FileEntryStatus.Error;
-        }
-        finally
-        {
-            StateHasChanged();
+            formData = await CreateFormDataContent(file);
+            this.files.Add(file);
         }
     }
 
-    private async Task<MultipartFormDataContent> CreateFormDataContent(FileUploadEventArgs e)
+    private async Task<MultipartFormDataContent> CreateFormDataContent(IBrowserFile e)
     {
         var formData = new MultipartFormDataContent();
         formData.Headers.ContentType!.MediaType = "multipart/form-data";
-        var fileContent = await GetFileContentAsync(e.File);
-        formData.Add(fileContent, "file", e.File.Name);
+        var fileContent = await GetFileContentAsync(e);
+        formData.Add(fileContent, "file", e.Name);
         return formData;
     }
 
-    private async Task<ByteArrayContent> GetFileContentAsync(IFileEntry file)
+    private async Task<ByteArrayContent> GetFileContentAsync(IBrowserFile file)
     {
         var buffer = new byte[file.Size];
         await file.OpenReadStream().ReadAsync(buffer);
         var fileContent = new ByteArrayContent(buffer);
-        fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(file.Type);
+        fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(file.ContentType);
         return fileContent;
-    }   
+    }
 
-    private IconName GetIconForFileStatus(FileEntryStatus status) =>
-     status switch
-     {
-         FileEntryStatus.Ready => IconName.FileUpload,
-         FileEntryStatus.Uploading => IconName.Bolt,
-         FileEntryStatus.Uploaded => IconName.CheckCircle,
-         FileEntryStatus.Error => IconName.TimesCircle,
-         _ => IconName.TimesCircle
-     };
-
-    private TextColor GetTextColorForFileStatus(FileEntryStatus status) =>
-        status switch
+    private async Task Submit()
+    {
+        try
         {
-            FileEntryStatus.Ready => TextColor.Primary,
-            FileEntryStatus.Uploading => TextColor.Warning,
-            FileEntryStatus.Uploaded => TextColor.Success,
-            FileEntryStatus.Error => TextColor.Danger,
-            _ => TextColor.Dark
-        };
+            var response = await httpClient.PostAsync("UploadFile/upload-csv-file-stream", formData);
+            response.EnsureSuccessStatusCode();
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine($"Erro ao fazer upload do arquivo", exc.Message);
+        }
+    }
+
+    private void Reset()
+    {
+        files.Clear();
+        formData = new MultipartFormDataContent();
+    }
 }
