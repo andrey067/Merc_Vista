@@ -1,5 +1,6 @@
 ﻿@page "/carregar-arquivos"
 @inject HttpClient httpClient;
+@inject NavigationManager navigation
 @using System.Net.Http.Headers;
 
 <PageTitle>Carregar Arquivos</PageTitle>
@@ -18,7 +19,7 @@
     </ButtonTemplate>
 </MudFileUpload>
 
-@if (files != null)
+@if (files != null && !load)
 {
     <MudList>
         @foreach (var file in files)
@@ -29,10 +30,14 @@
         }
     </MudList>
 }
+
+<Loading isLoading="load" />
+
 @code
 {
     IList<IBrowserFile> files = new List<IBrowserFile>();
     MultipartFormDataContent? formData = new MultipartFormDataContent();
+    private bool load = false;
 
     private async Task UploadFiles(IReadOnlyList<IBrowserFile> files)
     {
@@ -63,10 +68,12 @@
 
     private async Task Submit()
     {
+        load = true;
         try
         {
             var response = await httpClient.PostAsync("UploadFile/upload-csv-file-stream", formData);
-            response.EnsureSuccessStatusCode();
+            response.EnsureSuccessStatusCode();                    
+            navigation.NavigateTo("forca-relativa");
         }
         catch (Exception exc)
         {

@@ -1,0 +1,8 @@
+﻿@if (isLoading)
+{
+    <MudProgressCircular Color="Color.Default" Indeterminate="true" />
+}
+@code {
+    [Parameter]
+    public bool isLoading { get; set; }
+}
