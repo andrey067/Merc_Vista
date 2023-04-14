@@ -10,9 +10,9 @@ using Microsoft.AspNetCore.Http;
 using System.Globalization;
 using System.Text;
 
-namespace Application.Handlers
+namespace Application.Handlers.Commands
 {
-    public class UploadFileHandler: ICommandHandler<UploadFileCommand, List<Acao>>
+    public class UploadFileHandler : ICommandHandler<UploadFileCommand, List<Acao>>
     {
         private readonly IAcaoRepository _acaoRepository;
 

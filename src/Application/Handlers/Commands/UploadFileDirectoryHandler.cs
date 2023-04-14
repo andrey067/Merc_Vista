@@ -10,9 +10,9 @@ using Infrastructure;
 using System.Globalization;
 using System.Text;
 
-namespace Application.Handlers
+namespace Application.Handlers.Commands
 {
-    public sealed class UploadFileDirectoryHandler: ICommandHandler<UploadFilesDiretoryCommand>
+    public sealed class UploadFileDirectoryHandler : ICommandHandler<UploadFilesDiretoryCommand>
     {
         private readonly IAcaoRepository _repository;
 
