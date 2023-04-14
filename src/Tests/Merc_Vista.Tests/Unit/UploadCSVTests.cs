@@ -25,7 +25,7 @@ namespace Merc_Vista.Tests.Unit
             var controller = new UploadFileController(mockSender.Object);
 
             // Act
-            IActionResult result = await controller.UploadCSVDiretory("some/path");
+            var result = await controller.UploadCSVDiretory("some/path");
 
             // Assert
             Assert.NotNull(result);

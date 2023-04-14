@@ -24,13 +24,12 @@ namespace Infrastructure.Repositories
         }
 
         public async Task<bool> ExistAsync(int? id)
-         => await _dbSet.AsNoTracking()
-                               .AnyAsync(p => p.Id.Equals(id));
+         => await _dbSet.AsNoTracking().AnyAsync(p => p.Id.Equals(id));
 
         public async Task<IEnumerable<Acao>> GetAll()
          => await _dbSet.AsNoTracking().ToListAsync();
 
-        public async Task<Acao> GetById(int? id)
+        public async Task<Acao?> GetById(int? id)
          => await _dbSet.AsNoTracking().Where(item => item.Id == id).FirstOrDefaultAsync();
 
         public async Task<Acao> InsertAsync(Acao item)
