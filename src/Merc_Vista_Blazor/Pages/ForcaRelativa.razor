@@ -1,7 +1,99 @@
 ﻿@page "/forca-relativa"
+@using Merc_Vista_Blazor.Components
+@using System.Text.Json;
+@using Merc_Vista_Blazor.Models;
+@inject HttpClient httpClient
 
-<h3>ForcaRelativa</h3>
+<PageTitle>Força Relativa</PageTitle>
+<MudText Typo="Typo.h3" GutterBottom="true">Força Relativa</MudText>
+<Loading isLoading="load" />
+
+@if (ativosNomeSelect != null)
+{
+    <MudGrid>
+        <MudItem xs="12" sm="6" md="4">
+            <MudSelect T="string" Label="Selecione dois ou mais Ativos" OnClearButtonClick="LimparCampos" MultiSelection="true" AnchorOrigin="Origin.CenterRight" TransformOrigin="Origin.CenterRight" SelectedValuesChanged="LiberarFiltroDeDatas" @bind-Value="tituloSelecionado" Clearable>
+                @foreach (var state in ativosNomeSelect)
+                {
+                    <MudSelectItem T="string" Value="@state">@state</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+    </MudGrid>
+}
+
+@if (mostrarDataPicker)
+{
+    <MudGrid>
+        <MudItem xs="12" sm="6" md="4">
+            <MudDateRangePicker @ref="_picker" AutoClose="true" Editable="true" Label="Selecione a data a ser filtrada" @bind-DateRange="dateRangeSelect">
+                <PickerActions>
+                    <MudButton Class="mr-auto align-self-start" OnClick="@(() => _picker!.Clear())">Clear</MudButton>
+                    <MudButton OnClick="@(() => _picker!.Close(false))">Cancel</MudButton>
+                    <MudButton Color="Color.Primary" OnClick="@(async () => await CarregarForcaRelativa())">Ok</MudButton>
+                </PickerActions>
+            </MudDateRangePicker>
+        </MudItem>
+    </MudGrid>
+}
+
+<MudSwitch Label="Quantidade de Datas" @bind-Checked="@mostrarSwitchItens" />
+
+@if (mostrarSwitchItens)
+{
+    <MudItem xs="12" sm="6" md="4">
+        <MudSelect T="int" Label="Quantidade de datas" AnchorOrigin="Origin.BottomCenter" @bind-Value="filtroQuantidadeDatas">
+            @foreach (var item in quantidadeDatas)
+            {
+                <MudSelectItem T="int" Value="item" />
+            }
+        </MudSelect>
+    </MudItem>
+}
+
+<BarChart @ref="_barChart" dateRangeSelecionado="dateRangeSelect" filtroQuantidadeDatas="filtroQuantidadeDatas" />
 
 @code {
+    private bool load = true;
+    private bool mostrarDataPicker;
+    private bool mostrarSwitchItens;
+    private string? tituloSelecionado = null;
+    private int filtroQuantidadeDatas { get; set; } = 10;
+    private List<string>? ativosNomeSelect { get; set; } = null;
+    private DateRange? dateRangeSelect;
+    private List<string>? ativosSelecionados { get; set; } = null;
+    private BarChart? _barChart;
+    private List<int> quantidadeDatas = new List<int> { 10, 20, 30};
+    private MudDateRangePicker? _picker;
 
+    protected override async Task OnInitializedAsync() => await CarregarNomeTitulos();
+
+    private async Task CarregarNomeTitulos()
+    {
+        load = true;
+        var result = await httpClient.GetFromJsonAsync<ResultModel<TituloData>>("ativos/obterNomeAtivos");
+        ativosNomeSelect = result?.Data.Ativo;
+        dateRangeSelect = new DateRange(result?.Data.DataInicial, result?.Data.Datafinal);
+        load = false;
+    }
+
+    private void LiberarFiltroDeDatas(IEnumerable<string> titulosSelecionados)
+    {
+        if (titulosSelecionados == null || titulosSelecionados.Count() < 2)
+            return;
+        ativosSelecionados = titulosSelecionados.ToList();
+        mostrarDataPicker = true;
+    }
+
+    private async Task CarregarForcaRelativa()
+    {
+        await _barChart!.CarregarForcaRelativa(ativosSelecionados)!;
+        _picker!.Close();
+    }
+
+    private void LimparCampos()
+    {
+        mostrarDataPicker = false;
+        _barChart!.ApagarCharSeries();
+    }
 }

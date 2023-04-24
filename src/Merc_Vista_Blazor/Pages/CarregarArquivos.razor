@@ -9,11 +9,11 @@
 
 <MudText Class="mb-8">Selecione os arquivos a serem carregados</MudText>
 
-<MudFileUpload T="IReadOnlyList<IBrowserFile>" Accept=".csv" FilesChanged="UploadFiles">
+<MudFileUpload T="IReadOnlyList<IBrowserFile>" Accept=".csv" FilesChanged="UploadFiles" MaximumFileCount="1000">
     <ButtonTemplate>
         <MudCardActions>
             <MudButton HtmlTag="label" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.AttachFile" for="@context"> Somente arquivos .csv</MudButton>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-5" StartIcon="@Icons.Material.Filled.CloudUpload" OnClick="@(async () => await Submit())">Submit</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-5" StartIcon="@Icons.Material.Filled.CloudUpload" OnClick="@(async () => await Submit())">Enviar</MudButton>
             <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-5" OnClick="@(() => Reset())">Limpar arquivos</MudButton>
         </MudCardActions>
     </ButtonTemplate>
@@ -36,25 +36,31 @@
 @code
 {
     IList<IBrowserFile> files = new List<IBrowserFile>();
-    MultipartFormDataContent? formData = new MultipartFormDataContent();
     private bool load = false;
 
-    private async Task UploadFiles(IReadOnlyList<IBrowserFile> files)
-    {
-        foreach (var file in files)
-        {
-            formData = await CreateFormDataContent(file);
-            this.files.Add(file);
-        }
-    }
+    private void UploadFiles(IReadOnlyList<IBrowserFile> files) => files.ToList().ForEach(file => this.files.Add(file));
 
-    private async Task<MultipartFormDataContent> CreateFormDataContent(IBrowserFile e)
+    private async Task Submit()
     {
-        var formData = new MultipartFormDataContent();
-        formData.Headers.ContentType!.MediaType = "multipart/form-data";
-        var fileContent = await GetFileContentAsync(e);
-        formData.Add(fileContent, "file", e.Name);
-        return formData;
+        load = true;
+        try
+        {
+            var tasks = files.Select(async file =>
+                {
+                    var content = await CreateFormDataContent(file);
+                    var response = await httpClient.PostAsync("UploadFile/upload-csv-file-stream", content);
+                    response.EnsureSuccessStatusCode();
+                });
+
+            await Task.WhenAll(tasks);
+
+            navigation.NavigateTo("forca-relativa");
+        }
+        catch (Exception exc)
+        {
+            load = false;
+            Console.WriteLine($"Erro ao fazer upload do arquivo", exc.Message);
+        }
     }
 
     private async Task<ByteArrayContent> GetFileContentAsync(IBrowserFile file)
@@ -66,24 +72,14 @@
         return fileContent;
     }
 
-    private async Task Submit()
+    private async Task<MultipartFormDataContent> CreateFormDataContent(IBrowserFile e)
     {
-        load = true;
-        try
-        {
-            var response = await httpClient.PostAsync("UploadFile/upload-csv-file-stream", formData);
-            response.EnsureSuccessStatusCode();                    
-            navigation.NavigateTo("forca-relativa");
-        }
-        catch (Exception exc)
-        {
-            Console.WriteLine($"Erro ao fazer upload do arquivo", exc.Message);
-        }
+        var formData = new MultipartFormDataContent();
+        formData.Headers.ContentType!.MediaType = "multipart/form-data";
+        var fileContent = await GetFileContentAsync(e);
+        formData.Add(fileContent, "file", e.Name);
+        return formData;
     }
 
-    private void Reset()
-    {
-        files.Clear();
-        formData = new MultipartFormDataContent();
-    }
+    private void Reset() => files.Clear();
 }
