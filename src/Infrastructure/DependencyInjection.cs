@@ -13,11 +13,11 @@ namespace Infrastructure
         {
             var assembly = typeof(DependencyInjection).Assembly;
 
-            services.AddDbContext<MercVistaContext>(options =>
-                    options.UseInMemoryDatabase(databaseName: "MercVistaDb"));
             //services.AddDbContext<MercVistaContext>(options =>
-            //options.UseSqlite(configuration.GetConnectionString("DefaultConnection"),
-            //        b => b.MigrationsAssembly("Infrastructure")));
+            //        options.UseInMemoryDatabase(databaseName: "MercVistaDb"));
+            services.AddDbContext<MercVistaContext>(options =>
+            options.UseSqlite(configuration.GetConnectionString("DefaultConnection"),
+                    b => b.MigrationsAssembly("Infrastructure")));
 
             services.AddScoped<IAcaoRepository, AcaoRepository>();
 

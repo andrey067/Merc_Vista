@@ -2,6 +2,7 @@
 using Domain.Interfaces;
 using Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace Infrastructure.Repositories
 {
@@ -29,8 +30,9 @@ namespace Infrastructure.Repositories
         public async Task<IEnumerable<Acao>> GetAll()
          => await _dbSet.AsNoTracking().ToListAsync();
 
-        public async Task<Acao?> GetById(int? id)
+        public async Task<Acao> GetById(int id)
          => await _dbSet.AsNoTracking().Where(item => item.Id == id).FirstOrDefaultAsync();
+        public IQueryable<Acao> GetQueryable(Expression<Func<Acao, bool>>? query) => query is null ? _dbSet : _dbSet.Where(query);
 
         public async Task<Acao> InsertAsync(Acao item)
         {

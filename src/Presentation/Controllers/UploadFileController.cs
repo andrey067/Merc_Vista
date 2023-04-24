@@ -43,5 +43,19 @@ namespace Presentation.Controllers
 
             return result.IsSuccess ? Ok(result.Data) : BadRequest(result.Errors);
         }
+
+        [HttpPost]
+        [Route("upload-zip-file-stream")]
+        [SwaggerOperation(Summary = "Faz upload de um arquivo CSV")]
+        [SwaggerResponse(StatusCodes.Status200OK)]
+        [SwaggerResponse(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<Result<Acao>>> UploadCSVFileStreamZip
+        (
+          IFormFile file)
+        {
+            var result = await Sender.Send(new UploadFileCommand(file));
+
+            return result.IsSuccess ? Ok(result.Data) : BadRequest(result.Errors);
+        }
     }
 }
