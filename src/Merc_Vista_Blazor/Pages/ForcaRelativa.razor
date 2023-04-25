@@ -10,39 +10,25 @@
 
 @if (ativosNomeSelect != null)
 {
-    <MudGrid>
+    <MudGrid Class="d-flex align-center">
         <MudItem xs="12" sm="6" md="4">
             <MudSelect T="string" Label="Selecione dois ou mais Ativos" OnClearButtonClick="LimparCampos" MultiSelection="true" AnchorOrigin="Origin.CenterRight" TransformOrigin="Origin.CenterRight" SelectedValuesChanged="LiberarFiltroDeDatas" @bind-Value="tituloSelecionado" Clearable>
-                @foreach (var state in ativosNomeSelect)
+            @foreach (var state in ativosNomeSelect)
                 {
                     <MudSelectItem T="string" Value="@state">@state</MudSelectItem>
                 }
             </MudSelect>
         </MudItem>
-    </MudGrid>
-}
-
-@if (mostrarDataPicker)
-{
-    <MudGrid>
-        <MudItem xs="12" sm="6" md="4">
-            <MudDateRangePicker @ref="_picker" AutoClose="true" Editable="true" Label="Selecione a data a ser filtrada" @bind-DateRange="dateRangeSelect">
-                <PickerActions>
-                    <MudButton Class="mr-auto align-self-start" OnClick="@(() => _picker!.Clear())">Clear</MudButton>
-                    <MudButton OnClick="@(() => _picker!.Close(false))">Cancel</MudButton>
-                    <MudButton Color="Color.Primary" OnClick="@(async () => await CarregarForcaRelativa())">Ok</MudButton>
-                </PickerActions>
-            </MudDateRangePicker>
+        <MudItem sm="6" md="4">
+            <MudSwitch Label="Quantidade de Data a ser filtradas" @bind-Checked="@mostrarSwitchItens" />
         </MudItem>
     </MudGrid>
 }
 
-<MudSwitch Label="Quantidade de Datas" @bind-Checked="@mostrarSwitchItens" />
-
 @if (mostrarSwitchItens)
 {
     <MudItem xs="12" sm="6" md="4">
-        <MudSelect T="int" Label="Quantidade de datas" AnchorOrigin="Origin.BottomCenter" @bind-Value="filtroQuantidadeDatas">
+        <MudSelect T="int" AnchorOrigin="Origin.BottomCenter" @bind-Value="filtroQuantidadeDatas">
             @foreach (var item in quantidadeDatas)
             {
                 <MudSelectItem T="int" Value="item" />
@@ -51,20 +37,56 @@
     </MudItem>
 }
 
-<BarChart @ref="_barChart" dateRangeSelecionado="dateRangeSelect" filtroQuantidadeDatas="filtroQuantidadeDatas" />
+@if (mostrarDataPickerEPesquisa)
+{
+    <MudGrid>
+        <MudItem xs="12" sm="6" md="4">
+            <MudDateRangePicker @ref="_picker" Editable="true" Label="Selecione a data a ser filtrada" @bind-DateRange="dateRangeSelect">
+                <PickerActions>
+                    <MudButton Class="mr-auto align-self-start" OnClick="@(() => _picker!.Clear())">Clear</MudButton>
+                    <MudButton OnClick="@(() => _picker!.Close(false))">Cancel</MudButton>
+                    <MudButton Color="Color.Primary" OnClick="@(() => _picker!.Clear())">Ok</MudButton>
+                </PickerActions>
+            </MudDateRangePicker>
+        </MudItem>
+    </MudGrid>
+}
+
+@if (mostrarDataPickerEPesquisa)
+{
+    <MudGrid>
+        <MudItem xs="12" sm="6" md="4">
+            <MudButton Disabled="@_processing" OnClick="async () => await CarregarForcaRelativa()" Variant="Variant.Filled" Color="Color.Primary">
+                @if (_processing)
+                {
+                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                    <MudText Class="ms-2">Processando</MudText>
+                }
+                else
+                {
+                    <MudText>Pesquisar</MudText>
+                }
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+}
+
+<BarChartJs @ref="_barChartJs" dateRangeSelecionado="dateRangeSelect" filtroQuantidadeDatas="filtroQuantidadeDatas"></BarChartJs>
 
 @code {
     private bool load = true;
-    private bool mostrarDataPicker;
+    private bool mostrarDataPickerEPesquisa;
     private bool mostrarSwitchItens;
     private string? tituloSelecionado = null;
     private int filtroQuantidadeDatas { get; set; } = 10;
     private List<string>? ativosNomeSelect { get; set; } = null;
     private DateRange? dateRangeSelect;
     private List<string>? ativosSelecionados { get; set; } = null;
-    private BarChart? _barChart;
-    private List<int> quantidadeDatas = new List<int> { 10, 20, 30};
+    private BarChartJs? _barChartJs;
+    private List<int> quantidadeDatas = new List<int> { 10, 20, 30 };
     private MudDateRangePicker? _picker;
+    private bool _processing = false;
+
 
     protected override async Task OnInitializedAsync() => await CarregarNomeTitulos();
 
@@ -82,18 +104,20 @@
         if (titulosSelecionados == null || titulosSelecionados.Count() < 2)
             return;
         ativosSelecionados = titulosSelecionados.ToList();
-        mostrarDataPicker = true;
+        mostrarDataPickerEPesquisa = true;
     }
 
     private async Task CarregarForcaRelativa()
     {
-        await _barChart!.CarregarForcaRelativa(ativosSelecionados)!;
+        _processing = true;
+        await _barChartJs!.CarregarForcaRelativa(ativosSelecionados)!;
         _picker!.Close();
+        _processing = false;
     }
 
     private void LimparCampos()
     {
-        mostrarDataPicker = false;
-        _barChart!.ApagarCharSeries();
+        mostrarDataPickerEPesquisa = false;
+        _barChartJs!.ApagarCharJs();
     }
 }
