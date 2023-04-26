@@ -4,6 +4,7 @@
 <MudDialogProvider />
 <MudSnackbarProvider />
 
+<Spinner></Spinner>
 <MudLayout>
     <MudAppBar Elevation="0">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
@@ -17,6 +18,7 @@
     <MudMainContent>
         <MudContainer MaxWidth="MaxWidth.Large" Class="my-16 pt-16">
             @Body
+            <Spinner></Spinner>
         </MudContainer>
     </MudMainContent>
 </MudLayout>

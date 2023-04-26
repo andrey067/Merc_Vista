@@ -1,7 +1,9 @@
 ﻿@page "/carregar-arquivos"
 @inject HttpClient httpClient;
 @inject NavigationManager navigation
+@inject IServiceCaller ServiceCaller;
 @using System.Net.Http.Headers;
+@using Merc_Vista_Blazor.Services;
 
 <PageTitle>Carregar Arquivos</PageTitle>
 
@@ -31,8 +33,6 @@
     </MudList>
 }
 
-<Loading isLoading="load" />
-
 @code
 {
     IList<IBrowserFile> files = new List<IBrowserFile>();
@@ -42,34 +42,26 @@
 
     private async Task Submit()
     {
-        load = true;
         try
         {
-            var tasks = files.Select(async file =>
-                {
-                    var content = await CreateFormDataContent(file);
-                    var response = await httpClient.PostAsync("UploadFile/upload-csv-file-stream", content);
-                    response.EnsureSuccessStatusCode();
-                });
+            await ServiceCaller.CallAsync<HttpClient, Action>(http => async () =>
+            {
+                var tasks = files.Select(async file =>
+                 {
+                     var content = await CreateFormDataContent(file);
+                     var response = await http.PostAsync("UploadFile/upload-csv-file-stream", content);
+                     response.EnsureSuccessStatusCode();
+                 });
 
-            await Task.WhenAll(tasks);
+                await Task.WhenAll(tasks);
+            });                       
 
             navigation.NavigateTo("forca-relativa");
         }
         catch (Exception exc)
         {
-            load = false;
             Console.WriteLine($"Erro ao fazer upload do arquivo", exc.Message);
         }
-    }
-
-    private async Task<ByteArrayContent> GetFileContentAsync(IBrowserFile file)
-    {
-        var buffer = new byte[file.Size];
-        await file.OpenReadStream().ReadAsync(buffer);
-        var fileContent = new ByteArrayContent(buffer);
-        fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(file.ContentType);
-        return fileContent;
     }
 
     private async Task<MultipartFormDataContent> CreateFormDataContent(IBrowserFile e)
@@ -79,6 +71,15 @@
         var fileContent = await GetFileContentAsync(e);
         formData.Add(fileContent, "file", e.Name);
         return formData;
+    }
+
+    private async Task<ByteArrayContent> GetFileContentAsync(IBrowserFile file)
+    {
+        var buffer = new byte[file.Size];
+        await file.OpenReadStream().ReadAsync(buffer);
+        var fileContent = new ByteArrayContent(buffer);
+        fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(file.ContentType);
+        return fileContent;
     }
 
     private void Reset() => files.Clear();
