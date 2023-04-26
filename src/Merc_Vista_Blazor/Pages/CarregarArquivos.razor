@@ -1,7 +1,7 @@
 ﻿@page "/carregar-arquivos"
 @inject HttpClient httpClient;
 @inject NavigationManager navigation
-@inject IServiceCaller ServiceCaller;
+@inject IServiceCaller ServiceCaller
 @using System.Net.Http.Headers;
 @using Merc_Vista_Blazor.Services;
 
@@ -44,17 +44,14 @@
     {
         try
         {
-            await ServiceCaller.CallAsync<HttpClient, Action>(http => async () =>
-            {
-                var tasks = files.Select(async file =>
-                 {
-                     var content = await CreateFormDataContent(file);
-                     var response = await http.PostAsync("UploadFile/upload-csv-file-stream", content);
-                     response.EnsureSuccessStatusCode();
-                 });
+            var tasks = files.Select(async file =>
+                {
+                    var content = await CreateFormDataContent(file);
+                    var response = await ServiceCaller.CallAsync<HttpClient, HttpResponseMessage>(async http => await http.PostAsync("UploadFile/upload-csv-file-stream", content));
+                    response.EnsureSuccessStatusCode();
+                });
 
-                await Task.WhenAll(tasks);
-            });                       
+            await Task.WhenAll(tasks);
 
             navigation.NavigateTo("forca-relativa");
         }
