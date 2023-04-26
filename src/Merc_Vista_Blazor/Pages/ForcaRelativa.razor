@@ -2,11 +2,13 @@
 @using Merc_Vista_Blazor.Components
 @using System.Text.Json;
 @using Merc_Vista_Blazor.Models;
-@inject HttpClient httpClient
+@using Merc_Vista_Blazor.Services;
+@inject HttpClient httpClient;
+@inject IServiceCaller ServiceCaller;
 
 <PageTitle>Força Relativa</PageTitle>
 <MudText Typo="Typo.h3" GutterBottom="true">Força Relativa</MudText>
-<Loading isLoading="load" />
+@*<Loading isLoading="load" />*@
 
 @if (ativosNomeSelect != null)
 {
@@ -93,7 +95,7 @@
     private async Task CarregarNomeTitulos()
     {
         load = true;
-        var result = await httpClient.GetFromJsonAsync<ResultModel<TituloData>>("ativos/obterNomeAtivos");
+        var result = await ServiceCaller.CallAsync<HttpClient, ResultModel<TituloData>>(async http => await http.GetFromJsonAsync<ResultModel<TituloData>>("ativos/obterNomeAtivos"));
         ativosNomeSelect = result?.Data.Ativo;
         dateRangeSelect = new DateRange(result?.Data.DataInicial, result?.Data.Datafinal);
         load = false;
