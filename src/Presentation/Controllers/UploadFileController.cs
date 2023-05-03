@@ -35,13 +35,13 @@ namespace Presentation.Controllers
         [SwaggerOperation(Summary = "Faz upload de um arquivo CSV")]
         [SwaggerResponse(StatusCodes.Status200OK)]
         [SwaggerResponse(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<Result<Acao>>> UploadCSVFileStream
+        public async Task<ActionResult> UploadCSVFileStream
         (
           IFormFile file)
         {
             var result = await Sender.Send(new UploadFileCommand(file));
 
-            return result.IsSuccess ? Ok(result.Data) : BadRequest(result.Errors);
+            return result.IsSuccess ? Ok(result) : BadRequest(result.Errors);
         }
 
         [HttpPost]
@@ -55,7 +55,7 @@ namespace Presentation.Controllers
         {
             var result = await Sender.Send(new UploadFileCommand(file));
 
-            return result.IsSuccess ? Ok(result.Data) : BadRequest(result.Errors);
+            return result.IsSuccess ? Ok(result) : BadRequest(result.Errors);
         }
     }
 }
