@@ -7,6 +7,9 @@ namespace Merc_Vista.Tests.Fixtures
         public Result<T> SuccessFixture(T result)
          => Result<T>.Success(result);
 
+        public Result SuccessFixture()
+         => Result.Success();
+
         public Result<T> FailureFixture(Error errors)
          => Result<T>.Failure(errors);
     }
