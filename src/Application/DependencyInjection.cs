@@ -1,4 +1,6 @@
-﻿using FluentValidation;
+﻿using Application.Interfaces;
+using Application.Services;
+using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Application
@@ -9,9 +11,10 @@ namespace Application
         {
             var assembly = typeof(DependencyInjection).Assembly;
 
-            services.AddMediatR(configuration =>
-                                                       configuration.RegisterServicesFromAssembly(assembly));
+            services.AddMediatR(configuration => configuration.RegisterServicesFromAssembly(assembly));
 
+            services.AddScoped<ICsvService, CsvService>();
+            services.AddScoped<IRelativeStrengthService, RelativeStrengthService>();
             services.AddValidatorsFromAssembly(assembly);
 
             return services;

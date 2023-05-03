@@ -1,73 +1,40 @@
 ﻿using Application.Commands;
 using Application.Interfaces;
-using CsvHelper;
-using CsvHelper.Configuration;
 using Domain;
 using Domain.Interfaces;
 using Domain.Shared;
-using Infrastructure;
+using Mapster;
 using Microsoft.AspNetCore.Http;
-using System.Globalization;
-using System.Text;
 
 namespace Application.Handlers.Commands
 {
-    public class UploadFileHandler : ICommandHandler<UploadFileCommand, List<Acao>>
+    public class UploadFileHandler: ICommandHandler<UploadFileCommand>
     {
         private readonly IAcaoRepository _acaoRepository;
+        private readonly ICsvService _csvService;
 
-        public UploadFileHandler(IAcaoRepository acaoRepository)
-         => _acaoRepository = acaoRepository;
+        public UploadFileHandler(IAcaoRepository acaoRepository, ICsvService csvService)
+        {
+            _acaoRepository = acaoRepository;
+            _csvService = csvService;
+        }
 
-        public async Task<Result<List<Acao>>> Handle(UploadFileCommand request, CancellationToken cancellationToken)
+        public async Task<Result> Handle(UploadFileCommand request, CancellationToken cancellationToken)
         {
             if (ValidateExistsFiles(request.File))
-                return Result<List<Acao>>.Failure(new Error("Erro ao importar o arquivo", "Erro"));
+                return Result<IEnumerable<Acao>>.Failure(new Error("Erro ao importar o arquivo", "Erro"));
 
-            var acao = new List<Acao>();
-            using (var reader = new StreamReader(request.File.OpenReadStream(), Encoding.UTF8))
-            {
-                using (var csv = new CsvReader(ReplaceWrongWords(reader), new CsvConfiguration(CultureInfo.InvariantCulture)
-                {
-                    HasHeaderRecord = true,
-                    MissingFieldFound = null,
-                    Encoding = Encoding.UTF8,
-                    PrepareHeaderForMatch = (arg) => arg.Header,
-                    DetectDelimiter = true,
-                }))
-                {
-                    csv.Context.RegisterClassMap<CsvMapConfiguration.AtivoMap>();
-                    csv.Read();
-                    csv.ReadHeader();
+            var listCsvDto = _csvService.ReadFormFile(request.File);
 
-                    if (ValidateHeader(csv))
-                        return Result<List<Acao>>.Failure(new Error("Erro ao importar o arquivo", "Erro no cabeçalho do arquivo"));
+            if (listCsvDto.Count == 0)
+                return Result<IEnumerable<Acao>>.Failure(new Error("Erro ao importar o arquivo", "Erro"));
 
-                    var listaConvertida = csv.GetRecords<Acao>().ToList();
-                    acao.AddRange(await _acaoRepository.InsertRangeAsync(listaConvertida));
-                }
-            }
+            var acoes = listCsvDto.Adapt<List<Acao>>();
+            await _acaoRepository.InsertRangeAsync(acoes);
 
-            return Result<List<Acao>>.Success(acao);
+            return Result.Success();
         }
 
-        private static bool ValidateExistsFiles(IFormFile file)
-         => file is null;
-
-        private static StringReader ReplaceWrongWords(StreamReader reader)
-        {
-            var csvText = reader.ReadToEnd();
-            csvText = csvText.Replace("M�ximo", "Maximo").Replace("M�nimo", "Minimo");
-            var readerReplaced = new StringReader(csvText);
-
-            return readerReplaced;
-        }
-
-        private static bool ValidateHeader(CsvReader csv)
-        {
-            var actualHeaders = csv.HeaderRecord!.ToList();
-            var expectedHeaders = typeof(Acao).GetProperties().Where(p => p.Name != "Id").Select(p => p.Name).ToList();
-            return !expectedHeaders.SequenceEqual(actualHeaders);
-        }
+        private bool ValidateExistsFiles(IFormFile file) => file is null;
     }
 }

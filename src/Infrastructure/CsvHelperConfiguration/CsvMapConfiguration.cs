@@ -1,14 +1,14 @@
 ﻿using CsvHelper.Configuration;
-using Domain;
+using Domain.Dtos;
 using Infrastructure.Csv_Converters;
 
-namespace Infrastructure
+namespace Infrastructure.CsvHelperConfiguration
 {
     public static class CsvMapConfiguration
     {
-        public sealed class AtivoMap: ClassMap<Acao>
+        public sealed class CsvDtoMap: ClassMap<CsvDto>
         {
-            public AtivoMap()
+            public CsvDtoMap()
             {
                 Map(m => m.Ativo);
                 Map(m => m.Data).TypeConverter<ConvertStringToDateTime>();

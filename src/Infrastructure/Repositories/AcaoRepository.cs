@@ -32,20 +32,19 @@ namespace Infrastructure.Repositories
 
         public async Task<Acao> GetById(int id)
          => await _dbSet.AsNoTracking().Where(item => item.Id == id).FirstOrDefaultAsync();
-        public IQueryable<Acao> GetQueryable(Expression<Func<Acao, bool>>? query) => query is null ? _dbSet : _dbSet.Where(query);
+        public IQueryable<Acao> GetQueryable(Expression<Func<Acao, bool>>? query)
+         => query is null ? _dbSet : _dbSet.Where(query);
 
-        public async Task<Acao> InsertAsync(Acao item)
+        public async Task InsertAsync(Acao item)
         {
             _context.Add(item);
             await _context.SaveChangesAsync();
-            return item;
         }
 
-        public async Task<IEnumerable<Acao>> InsertRangeAsync(IEnumerable<Acao> items)
+        public async Task InsertRangeAsync(IEnumerable<Acao> items)
         {
             await _dbSet.AddRangeAsync(items);
             await _context.SaveChangesAsync();
-            return items;
         }
 
         public async Task<Acao> UpdateAsync(Acao item)

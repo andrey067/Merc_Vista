@@ -3,8 +3,8 @@ using Application.Query.Responses;
 
 namespace Application.Query
 {
-    public sealed record class GetRelativeStrengthQuery(List<string> ativosSelecionados,
+    public sealed record class GetRelativeStrengthQuery(List<string> AtivosSelecionados,
                                                         DateTime DataInicial,
                                                         DateTime DataFinal,
-                                                        int totalItensAmostrar = 10) : IQuery<GetRelativeStrengthResponse>;
+                                                        int TotalItensAmostrar = 10) : IQuery<GetRelativeStrengthResponse>;
 }

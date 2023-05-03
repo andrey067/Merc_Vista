@@ -5,7 +5,6 @@ using Dasync.Collections;
 using Domain.Interfaces;
 using Domain.Shared;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
 
 namespace Application.Handlers.Queries
 {
@@ -25,7 +24,7 @@ namespace Application.Handlers.Queries
                 var dataInicial = await queryable.Take(10).MinAsync(a => a.Data);
                 var dataFinal = await queryable.Take(10).MaxAsync(a => a.Data);
 
-                var response = new GetTitilesDatesResponse(result.DistinctBy(c => c.Ativo).Select(r => r.Ativo).ToList(), dataInicial.Value, dataFinal.Value);
+                var response = new GetTitilesDatesResponse(result.DistinctBy(c => c.CodidoAcao).Select(r => r.CodidoAcao).ToList(), dataInicial, dataFinal);
                 return Result<GetTitilesDatesResponse>.Success(response);
             }
 
