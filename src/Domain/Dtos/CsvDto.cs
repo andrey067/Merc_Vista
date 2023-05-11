@@ -1,6 +1,7 @@
 ﻿namespace Domain.Dtos
 {
-    public record struct CsvDto(string Ativo,
+    public record struct CsvDto(int Linha,
+                        string Ativo,
                         DateTime? Data,
                         decimal Abertura,
                         decimal Maximo,

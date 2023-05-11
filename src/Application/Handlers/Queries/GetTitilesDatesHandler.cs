@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Application.Handlers.Queries
 {
-    public class GetTitilesDatesHandler : IQueryHandler<GetTitilesQuery, GetTitilesDatesResponse>
+    public class GetTitilesDatesHandler: IQueryHandler<GetTitilesQuery, GetTitilesDatesResponse>
     {
         private readonly IAcaoRepository _repository;
 
@@ -21,8 +21,8 @@ namespace Application.Handlers.Queries
 
             if (result.Count > 0)
             {
-                var dataInicial = await queryable.Take(10).MinAsync(a => a.Data);
-                var dataFinal = await queryable.Take(10).MaxAsync(a => a.Data);
+                var dataInicial = await queryable.Take(request.RangeDate).MinAsync(a => a.Data);
+                var dataFinal = await queryable.Take(request.RangeDate).MaxAsync(a => a.Data);
 
                 var response = new GetTitilesDatesResponse(result.DistinctBy(c => c.CodidoAcao).Select(r => r.CodidoAcao).ToList(), dataInicial, dataFinal);
                 return Result<GetTitilesDatesResponse>.Success(response);

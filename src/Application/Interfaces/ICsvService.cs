@@ -5,7 +5,8 @@ namespace Application.Interfaces
 {
     public interface ICsvService
     {
-        List<CsvDto> ReadFormFile(IFormFile file);
-        Task<List<CsvDto>> ReadFormFileAync(string[] file);        
+        Task<List<CsvDto>> ReadFormFile(IFormFile file);
+        Task<List<CsvDto>> ReadFormFileAync(string[] file);
+        Task<List<CsvDto>> ReadFileAsync(string streamReader);
     }
 }

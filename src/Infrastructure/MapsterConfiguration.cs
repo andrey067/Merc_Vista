@@ -6,13 +6,29 @@ using Mapster;
 
 namespace Infrastructure
 {
-    public class MapsterConfiguration
+    public class MapsterConfiguration: IRegister
     {
-        public void ConfigureMaspter()
+        public void Register(TypeAdapterConfig config)
         {
-            TypeAdapterConfig<CsvDto, Acao>.NewConfig()
-                .Map(dest => dest.CodidoAcao, src => Enum.Parse<B3Companies>(src.Ativo))
-                .Map(dest => dest.EmpresaNome, src => Enum.Parse<B3Companies>(src.Ativo).GetDescription());
+            config.ForType<CsvDto, Acao>()
+                .Map(dest => dest.CodidoAcao, src => ConverterAtivo(src.Ativo))
+                .Map(dest => dest.EmpresaNome, src => ConverterEmpresaNome(src.Ativo));
+        }
+
+        private string ConverterAtivo(string ativo)
+        {
+            if (Enum.TryParse<B3Companies>(ativo, out var b3Companies))
+                return b3Companies.ToString();
+            else
+                return ativo;
+        }
+
+        private string ConverterEmpresaNome(string ativo)
+        {
+            if (Enum.TryParse<B3Companies>(ativo, out var b3Companies))
+                return b3Companies.GetDescription();
+            else
+                return string.Empty;
         }
     }
 }

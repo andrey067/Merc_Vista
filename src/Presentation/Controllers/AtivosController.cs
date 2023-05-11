@@ -9,7 +9,7 @@ namespace Presentation.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AtivosController : BaseController
+    public class AtivosController: BaseController
     {
         public AtivosController(ISender sender) : base(sender) { }
 
@@ -21,18 +21,18 @@ namespace Presentation.Controllers
         {
             var ativos = ativosSelecionados.Split(',').ToList();
             var result = await Sender.Send(new GetRelativeStrengthQuery(ativos,
-                                                                                dataInicial,
-                                                                                dataFinal,
-                                                                                totalItensAmostrar != 0 ? totalItensAmostrar : default));
+                                                                        dataInicial,
+                                                                        dataFinal,
+                                                                        totalItensAmostrar != 0 ? totalItensAmostrar : default));
 
             return result.IsSuccess ? Ok(result) : BadRequest(result.Errors);
         }
 
         [HttpGet]
         [Route("obterNomeAtivos")]
-        public async Task<IActionResult> ObterNomeDosAtivos()
+        public async Task<IActionResult> ObterNomeDosAtivos([FromQuery] int rangeDate)
         {
-            var result = await Sender.Send(new GetTitilesQuery());
+            var result = await Sender.Send(new GetTitilesQuery(rangeDate));
 
             return result.IsSuccess ? Ok(result) : BadRequest(result.Errors);
         }
