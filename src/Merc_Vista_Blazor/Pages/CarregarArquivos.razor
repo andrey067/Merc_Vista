@@ -2,8 +2,13 @@
 @inject HttpClient httpClient;
 @inject NavigationManager navigation
 @inject IServiceCaller ServiceCaller
+@inject IDialogService DialogService;
 @using System.Net.Http.Headers;
+@using Merc_Vista_Blazor.Extensions;
+@using Merc_Vista_Blazor.Models;
 @using Merc_Vista_Blazor.Services;
+@using System.IO.Compression;
+@using System.Text;
 
 <PageTitle>Carregar Arquivos</PageTitle>
 
@@ -15,16 +20,19 @@
     <ButtonTemplate>
         <MudCardActions>
             <MudButton HtmlTag="label" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.AttachFile" for="@context"> Somente arquivos .csv</MudButton>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-5" StartIcon="@Icons.Material.Filled.CloudUpload" OnClick="@(async () => await Submit())">Enviar</MudButton>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-5" OnClick="@(() => Reset())">Limpar arquivos</MudButton>
+            @if (_files.Count() > 0)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-5" StartIcon="@Icons.Material.Filled.CloudUpload" OnClick="@(async () => await Enviar())">Enviar</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-5" OnClick="@(() => Reset())">Limpar arquivos</MudButton>
+            }
         </MudCardActions>
     </ButtonTemplate>
 </MudFileUpload>
 
-@if (files != null && !load)
+@if (_files.Count() > 0)
 {
     <MudList>
-        @foreach (var file in files)
+        @foreach (var file in _files)
         {
             <MudListItem Icon="@Icons.Material.Filled.AttachFile">
                 @file.Name <code>@file.Size bytes</code>
@@ -35,49 +43,53 @@
 
 @code
 {
-    IList<IBrowserFile> files = new List<IBrowserFile>();
-    private bool load = false;
+    private IList<IBrowserFile> _files = new List<IBrowserFile>();
 
-    private void UploadFiles(IReadOnlyList<IBrowserFile> files) => files.ToList().ForEach(file => this.files.Add(file));
+    private void UploadFiles(IReadOnlyList<IBrowserFile> files) => files.ToList().ForEach(file => _files.Add(file));
 
-    private async Task Submit()
+
+    private async Task Enviar()
     {
-        try
+        var resultRequest = await ServiceCaller.CallAsync<HttpClient, HttpResponseMessage>(async http =>
         {
-            var tasks = files.Select(async file =>
-                {
-                    var content = await CreateFormDataContent(file);
-                    var response = await ServiceCaller.CallAsync<HttpClient, HttpResponseMessage>(async http => await http.PostAsync("UploadFile/upload-csv-file-stream", content));
-                    response.EnsureSuccessStatusCode();
-                });
+            var content = await MontarRequisicao();
+            return await http.PostAsync("UploadFile/upload-zip-file-stream", content);
+        });
 
-            await Task.WhenAll(tasks);
-
+        if (resultRequest.IsSuccessStatusCode)
+        {
             navigation.NavigateTo("forca-relativa");
+            return;
         }
-        catch (Exception exc)
-        {
-            Console.WriteLine($"Erro ao fazer upload do arquivo", exc.Message);
-        }
+
+        var parameters = new DialogParameters();
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        var errors = await resultRequest.Content.ReadFromJsonAsync<List<ErrorResponseModel>>();
+        parameters.Add("Errors", errors);
+        DialogService.Show<ErrorDialog>("Erro", parameters, options);
     }
 
-    private async Task<MultipartFormDataContent> CreateFormDataContent(IBrowserFile e)
+    private async Task<byte[]> CompactarArquivos(IBrowserFile file) => await CompressGzip.Compress(file);
+
+    private async Task<MultipartFormDataContent> MontarRequisicao()
     {
         var formData = new MultipartFormDataContent();
-        formData.Headers.ContentType!.MediaType = "multipart/form-data";
-        var fileContent = await GetFileContentAsync(e);
-        formData.Add(fileContent, "file", e.Name);
+
+        foreach (var file in _files)
+        {
+            var compressedData = await CompactarArquivos(file);
+            var content = new ByteArrayContent(compressedData);
+            content.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data")
+                {
+                    Name = file.Name,
+                    FileName = file.Name + ".gz"
+                };
+            content.Headers.ContentType = new MediaTypeHeaderValue("application/gzip");
+            formData.Add(content);
+        }
+
         return formData;
     }
 
-    private async Task<ByteArrayContent> GetFileContentAsync(IBrowserFile file)
-    {
-        var buffer = new byte[file.Size];
-        await file.OpenReadStream().ReadAsync(buffer);
-        var fileContent = new ByteArrayContent(buffer);
-        fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(file.ContentType);
-        return fileContent;
-    }
-
-    private void Reset() => files.Clear();
+    private void Reset() => _files.Clear();
 }

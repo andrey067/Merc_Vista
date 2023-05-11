@@ -3,8 +3,12 @@
 @using System.Text.Json;
 @using Merc_Vista_Blazor.Models;
 @using Merc_Vista_Blazor.Services;
+@using System.Net;
+@using System.Globalization;
 @inject HttpClient httpClient;
 @inject IServiceCaller ServiceCaller;
+@inject IDialogService DialogService;
+@inject NavigationManager navigation;
 
 <PageTitle>Força Relativa</PageTitle>
 <MudText Typo="Typo.h3" GutterBottom="true">Força Relativa</MudText>
@@ -20,41 +24,23 @@
                 }
             </MudSelect>
         </MudItem>
-        <MudItem sm="6" md="4">
-            <MudSwitch Label="Quantidade de Data a ser filtradas" @bind-Checked="@mostrarSwitchItens" />
-        </MudItem>
     </MudGrid>
-}
-
-@if (mostrarSwitchItens)
-{
-    <MudItem xs="12" sm="6" md="4">
-        <MudSelect T="int" AnchorOrigin="Origin.BottomCenter" @bind-Value="filtroQuantidadeDatas">
-            @foreach (var item in quantidadeDatas)
-            {
-                <MudSelectItem T="int" Value="item" />
-            }
-        </MudSelect>
-    </MudItem>
 }
 
 @if (mostrarDataPickerEPesquisa)
 {
     <MudGrid>
         <MudItem xs="12" sm="6" md="4">
-            <MudDateRangePicker @ref="_picker" Editable="true" Label="Selecione a data a ser filtrada" @bind-DateRange="dateRangeSelect">
-                <PickerActions>
-                    <MudButton Class="mr-auto align-self-start" OnClick="@(() => _picker!.Clear())">Clear</MudButton>
-                    <MudButton OnClick="@(() => _picker!.Close(false))">Cancel</MudButton>
-                    <MudButton Color="Color.Primary" OnClick="@(() => _picker!.Clear())">Ok</MudButton>
-                </PickerActions>
-            </MudDateRangePicker>
+            <DatePickerRange DateRangeSelect="dateRangeSelect" ValorChanged="AtualizarData"></DatePickerRange>
         </MudItem>
     </MudGrid>
-}
 
-@if (mostrarDataPickerEPesquisa)
-{
+    <MudGrid>
+        <MudItem xs="12" sm="6" md="4">
+            <MudSlider @bind-Value="RangeDate">Buscar pelos ultimos @RangeDate.ToString() dias</MudSlider>
+        </MudItem>
+    </MudGrid>
+
     <MudGrid>
         <MudItem xs="12" sm="6" md="4">
             <MudButton Disabled="@_processing" OnClick="async () => await CarregarForcaRelativa()" Variant="Variant.Filled" Color="Color.Primary">
@@ -72,32 +58,39 @@
     </MudGrid>
 }
 
-<BarChartJs @ref="_barChartJs" dateRangeSelecionado="dateRangeSelect" filtroQuantidadeDatas="filtroQuantidadeDatas"></BarChartJs>
+<BarChartJs @ref="_barChartJs" dateRangeSelecionado="dateRangeSelect" filtroQuantidadeDatas="RangeDate"></BarChartJs>
 
 @code {
-    private bool load = true;
     private bool mostrarDataPickerEPesquisa;
-    private bool mostrarSwitchItens;
     private string? tituloSelecionado = null;
-    private int filtroQuantidadeDatas { get; set; } = 10;
+    private int RangeDate { get; set; } = 10;
     private List<string>? ativosNomeSelect { get; set; } = null;
-    private DateRange? dateRangeSelect;
+    private DateRange? dateRangeSelect { get; set; }
     private List<string>? ativosSelecionados { get; set; } = null;
     private BarChartJs? _barChartJs;
-    private List<int> quantidadeDatas = new List<int> { 10, 20, 30 };
-    private MudDateRangePicker? _picker;
     private bool _processing = false;
-
 
     protected override async Task OnInitializedAsync() => await CarregarNomeTitulos();
 
     private async Task CarregarNomeTitulos()
     {
-        load = true;
-        var result = await ServiceCaller.CallAsync<HttpClient, ResultModel<TituloData>>(async http => await http.GetFromJsonAsync<ResultModel<TituloData>>("ativos/obterNomeAtivos"));
-        ativosNomeSelect = result?.Data.Ativo;
-        dateRangeSelect = new DateRange(result?.Data.DataInicial, result?.Data.Datafinal);
-        load = false;
+        var resultRequest = await ServiceCaller.CallAsync<HttpClient, HttpResponseMessage>(async http => await httpClient.GetAsync($"ativos/obterNomeAtivos?rangeDate={RangeDate}"));
+
+        if (!resultRequest.IsSuccessStatusCode)
+        {
+            var parameters = new DialogParameters();
+            var errors = await resultRequest.Content.ReadFromJsonAsync<List<ErrorResponseModel>>();
+            var options = new DialogOptions { CloseOnEscapeKey = true };
+            parameters.Add("Errors", errors);
+            parameters.Add("Navigation", "carregar-arquivos");
+            DialogService.Show<ErrorDialog>("Erro", parameters, options);
+            return;
+        }
+
+        var resultConvet = await resultRequest.Content.ReadFromJsonAsync<ResultModel<TituloData>>();
+        ativosNomeSelect = resultConvet?.Data.Ativo;
+        dateRangeSelect = new DateRange(resultConvet?.Data.DataInicial, resultConvet?.Data.Datafinal);
+        RangeDate = (dateRangeSelect.End - dateRangeSelect.Start)!.Value.Days;
     }
 
     private void LiberarFiltroDeDatas(IEnumerable<string> titulosSelecionados)
@@ -112,7 +105,6 @@
     {
         _processing = true;
         await _barChartJs!.CarregarForcaRelativa(ativosSelecionados)!;
-        _picker!.Close();
         _processing = false;
     }
 
@@ -120,5 +112,10 @@
     {
         mostrarDataPickerEPesquisa = false;
         _barChartJs!.ApagarCharJs();
+    }
+
+    private void AtualizarData(DateRange? dateRange)
+    {
+        dateRangeSelect = dateRange;
     }
 }
