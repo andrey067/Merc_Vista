@@ -33,7 +33,7 @@ namespace Merc_Vista.Tests.Unit.HandlersTests.CommandsTests
             var command = new UploadFileCommand(file.Object);
             var expectedResult = Result.Success();
 
-            _csvServiceMock.Setup(x => x.ReadFormFile(It.IsAny<IFormFile>())).Returns(csvDtos);
+            _csvServiceMock.Setup(x => x.ReadFormFile(It.IsAny<IFormFile>())).ReturnsAsync(csvDtos);
             _acaoRepositoryMock.Setup(x => x.InsertRangeAsync(It.IsAny<List<Acao>>())).Returns(Task.CompletedTask);
 
             // Act
@@ -53,7 +53,7 @@ namespace Merc_Vista.Tests.Unit.HandlersTests.CommandsTests
             var command = new UploadFileCommand(null);
             var expectedError = new Error("Erro ao importar o arquivo", "Erro");
             var expectedResult = Result<IEnumerable<Acao>>.Failure(expectedError);
-            _csvServiceMock.Setup(x => x.ReadFormFile(It.IsAny<IFormFile>())).Returns(new List<CsvDto>());
+            _csvServiceMock.Setup(x => x.ReadFormFile(It.IsAny<IFormFile>())).ReturnsAsync(new List<CsvDto>());
             _acaoRepositoryMock.Setup(x => x.InsertRangeAsync(It.IsAny<List<Acao>>())).Returns(Task.CompletedTask);
 
             // Act
@@ -77,7 +77,7 @@ namespace Merc_Vista.Tests.Unit.HandlersTests.CommandsTests
             var expectedError = new Error("Erro ao importar o arquivo", "Erro");
             var expectedResult = Result<IEnumerable<Acao>>.Failure(expectedError);
 
-            _csvServiceMock.Setup(x => x.ReadFormFile(It.IsAny<IFormFile>())).Returns(csvDtos);
+            _csvServiceMock.Setup(x => x.ReadFormFile(It.IsAny<IFormFile>())).ReturnsAsync(csvDtos);
 
             // Act
             var result = await _handler.Handle(command, CancellationToken.None);

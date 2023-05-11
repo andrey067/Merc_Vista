@@ -1,9 +1,5 @@
 ﻿using CsvHelper;
 using CsvHelper.Configuration;
-using Domain.Dtos;
-using Infrastructure.Csv_Converters;
-using Infrastructure.CsvHelperConfiguration;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 
@@ -18,8 +14,7 @@ namespace Merc_Vista.Tests.Fixtures
             using (var writer = new StringWriter())
             {
                 using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
-                {
-                    csv.Context.RegisterClassMap<CsvMapConfiguration.CsvDtoMap>();
+                {                    
                     csv.WriteRecords(csvData);
                 }
 
@@ -42,7 +37,6 @@ namespace Merc_Vista.Tests.Fixtures
                     DetectDelimiter = true,
                 }))
                 {
-                    csv.Context.RegisterClassMap<CsvMapConfiguration.CsvDtoMap>();
                     csv.Read();
                     csv.ReadHeader();
 

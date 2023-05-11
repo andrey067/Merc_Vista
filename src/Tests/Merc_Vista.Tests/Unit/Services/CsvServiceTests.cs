@@ -14,21 +14,21 @@ namespace Merc_Vista.Tests.Unit.Services
         public CsvServiceTests() => _csvService = new CsvService();
 
         [Fact]
-        public void ReadFormFile_Should_Return_Null_When_Invalid_Header()
+        public async Task ReadFormFile_Should_Return_Null_When_Invalid_Header()
         {
             // Arrange
             var fileMock = new Mock<IFormFile>();
             fileMock.Setup(x => x.OpenReadStream()).Returns(new MemoryStream(Encoding.UTF8.GetBytes("Header1,Header2,Header3\nValue1,Value2,Value3")));
 
             // Act
-            var result = _csvService.ReadFormFile(fileMock.Object);
+            var result = await _csvService.ReadFormFile(fileMock.Object);
 
             // Assert
             Assert.Null(result);
         }
 
         [Fact]
-        public void ReadFormFile_Should_Return_List_Of_CsvDto_When_Valid_Header()
+        public async Task ReadFormFile_Should_Return_List_Of_CsvDto_When_Valid_Header()
         {
             // Arrange
             var fileMock = new Mock<IFormFile>();
@@ -37,7 +37,7 @@ namespace Merc_Vista.Tests.Unit.Services
             fileMock.Setup(x => x.OpenReadStream()).Returns(new MemoryStream(Encoding.UTF8.GetBytes(csvContent)));
 
             // Act
-            var result = _csvService.ReadFormFile(fileMock.Object);
+            var result = await _csvService.ReadFormFile(fileMock.Object);
 
             // Assert
             Assert.NotNull(result);

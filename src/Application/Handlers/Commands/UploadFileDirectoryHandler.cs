@@ -7,7 +7,7 @@ using Mapster;
 
 namespace Application.Handlers.Commands
 {
-    public sealed class UploadFileDirectoryHandler : ICommandHandler<UploadFilesDiretoryCommand>
+    public sealed class UploadFileDirectoryHandler: ICommandHandler<UploadFilesDiretoryCommand>
     {
         private readonly IAcaoRepository _acaoRepository;
         private readonly ICsvService _csvService;
@@ -28,7 +28,7 @@ namespace Application.Handlers.Commands
             if (ValidateExistsFiles(files))
                 return Result<Task>.Failure(new Error("Não existem arquivos com a extensão .csv", "Fornecessa um diretorio valido"));
 
-            var listCsvDto = _csvService.ReadFormFileAync(files);
+            var listCsvDto = await _csvService.ReadFormFileAync(files);
 
             var acoes = listCsvDto.Adapt<List<Acao>>();
             await _acaoRepository.InsertRangeAsync(acoes);

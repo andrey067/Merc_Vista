@@ -1,5 +1,4 @@
 ﻿using Application.Commands;
-using Domain;
 using Domain.Shared;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -19,7 +18,7 @@ namespace Presentation.Controllers
         [SwaggerOperation(Summary = "Faz upload de arquivos CSV de um diretório")]
         [SwaggerResponse(StatusCodes.Status200OK)]
         [SwaggerResponse(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> UploadCSVDiretory
+        public async Task<ActionResult<Result>> UploadCSVDiretory
         (
           [FromQuery(Name = "folderPath")]
           [SwaggerParameter("O caminho do diretório que contém os arquivos CSV a serem carregados.")]
@@ -35,9 +34,7 @@ namespace Presentation.Controllers
         [SwaggerOperation(Summary = "Faz upload de um arquivo CSV")]
         [SwaggerResponse(StatusCodes.Status200OK)]
         [SwaggerResponse(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult> UploadCSVFileStream
-        (
-          IFormFile file)
+        public async Task<ActionResult> UploadCSVFileStream(IFormFile file)
         {
             var result = await Sender.Send(new UploadFileCommand(file));
 
@@ -46,14 +43,20 @@ namespace Presentation.Controllers
 
         [HttpPost]
         [Route("upload-zip-file-stream")]
-        [SwaggerOperation(Summary = "Faz upload de um arquivo CSV")]
+        [SwaggerOperation(Summary = "Faz upload de um arquivo zip")]
         [SwaggerResponse(StatusCodes.Status200OK)]
         [SwaggerResponse(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<Result<Acao>>> UploadCSVFileStreamZip
-        (
-          IFormFile file)
+        public async Task<ActionResult<Result>> UploadCSVFileStreamZip()
         {
-            var result = await Sender.Send(new UploadFileCommand(file));
+            if (!Request.HasFormContentType)
+                return BadRequest("A requisição não contém o formulário de dados.");
+
+            var form = await Request.ReadFormAsync();
+
+            if (form.Files == null || form.Files.Count == 0)
+                return BadRequest("Nenhum arquivo foi enviado.");
+
+            var result = await Sender.Send(new UploadZipFileCommand(form));
 
             return result.IsSuccess ? Ok(result) : BadRequest(result.Errors);
         }

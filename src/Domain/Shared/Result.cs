@@ -23,7 +23,7 @@
 
         protected Result(bool succeeded, Error[] errors, T data) : base(succeeded, errors) => Data = data;
 
-        public static Result<T> Success(T? data) => new Result<T>(true, Array.Empty<Error>(), data);
+        public new static Result<T> Success(T? data) => new Result<T>(true, Array.Empty<Error>(), data);
 
         public new static Result<T> Failure(params Error[] errors) => new Result<T>(false, errors, default);
     }
