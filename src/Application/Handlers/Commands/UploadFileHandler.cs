@@ -24,7 +24,7 @@ namespace Application.Handlers.Commands
             if (ValidateExistsFiles(request.File))
                 return Result<IEnumerable<Acao>>.Failure(new Error("Erro ao importar o arquivo", "Erro"));
 
-            var listCsvDto = _csvService.ReadFormFile(request.File);
+            var listCsvDto = await _csvService.ReadFormFile(request.File);
 
             if (listCsvDto.Count == 0)
                 return Result<IEnumerable<Acao>>.Failure(new Error("Erro ao importar o arquivo", "Erro"));

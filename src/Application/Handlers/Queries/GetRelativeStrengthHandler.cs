@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Application.Handlers.Queries
 {
-    public class GetRelativeStrengthHandler : IQueryHandler<GetRelativeStrengthQuery, GetRelativeStrengthResponse>
+    public class GetRelativeStrengthHandler: IQueryHandler<GetRelativeStrengthQuery, GetRelativeStrengthResponse>
     {
         private readonly IAcaoRepository _repository;
         private readonly IRelativeStrengthService _relativeStrengthService;
@@ -26,10 +26,9 @@ namespace Application.Handlers.Queries
             List<List<Acao>> listaAcoes = new List<List<Acao>>();
             var tasks = request.AtivosSelecionados.Select(async ativo =>
             {
-                var query = PredicateBuilder.New<Acao>()
-                                                                    .And(a => a.CodidoAcao.ToLower() == ativo.ToLower())
-                                                                    .And(a => a.Data >= request.DataInicial)
-                                                                    .And(a => a.Data <= request.DataFinal);
+                var query = PredicateBuilder.New<Acao>().And(a => a.CodidoAcao.ToLower() == ativo.ToLower())
+                                                        .And(a => a.Data >= request.DataInicial)
+                                                        .And(a => a.Data <= request.DataFinal);
 
                 var result = await _repository.GetQueryable(query)
                                                        .OrderByDescending(a => a.Data)
@@ -53,9 +52,11 @@ namespace Application.Handlers.Queries
 
             listaAcoes.ForEach(a =>
             {
-                var response = new ChartPropResponse();
-                response.NomeAtivo = a.Select(s => s.EmpresaNome).FirstOrDefault("");
-                response.Valor = _relativeStrengthService.ObterValorDaAcao(a);
+                var response = new ChartPropResponse()
+                {
+                    NomeAtivo = a.Select(s => string.IsNullOrEmpty(s.EmpresaNome) ? s.CodidoAcao : s.EmpresaNome).FirstOrDefault(""),
+                    Valor = _relativeStrengthService.ObterValorDaAcao(a)
+                };
                 result.ChartProp.Add(response);
             });
 

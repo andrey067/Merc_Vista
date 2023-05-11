@@ -1,5 +1,5 @@
-﻿using CsvHelper.Configuration;
-using CsvHelper;
+﻿using CsvHelper;
+using CsvHelper.Configuration;
 using CsvHelper.TypeConversion;
 
 namespace Infrastructure.Csv_Converters
@@ -8,7 +8,7 @@ namespace Infrastructure.Csv_Converters
     {
         public override object ConvertFromString(string text, IReaderRow row, MemberMapData memberMapData)
         {
-            if (decimal.TryParse(text.Replace(".", "").Replace(",", "."), out decimal result))
+            if (!string.IsNullOrEmpty(text) && decimal.TryParse(text.Replace(".", "").Replace(",", "."), out decimal result))
                 return result;
             else
                 return 0;

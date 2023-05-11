@@ -3,5 +3,5 @@ using Application.Query.Responses;
 
 namespace Application.Query
 {
-    public sealed record class GetTitilesQuery() : IQuery<GetTitilesDatesResponse> { }
+    public sealed record class GetTitilesQuery(int RangeDate): IQuery<GetTitilesDatesResponse> { }
 }
