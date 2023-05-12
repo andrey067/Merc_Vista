@@ -1,7 +1,7 @@
 ﻿@using Merc_Vista_Blazor.Services;
-@inject ISpinnerService SpinnerService
+@inject IServiceCaller ServiceCaller
 
-<MudOverlay Visible="IsVisible" DarkBackground="true" ZIndex="9999" Absolute="true">
+<MudOverlay Visible="IsVisible" DarkBackground="true" Absolute="true">
     <MudProgressCircular Color="Color.Secondary" Indeterminate="true" />
 </MudOverlay>
 
@@ -9,21 +9,16 @@
 {
     protected bool IsVisible { get; set; }
 
-    protected override void OnInitialized()
-    {
-        SpinnerService.OnShow += ShowSpinner;
-        SpinnerService.OnHide += HideSpinner;
-    }
+    protected override void OnInitialized() => ServiceCaller.OnLoadingStateChanged += HandleLoadingStateChanged;
 
-    public void ShowSpinner()
+    protected void HandleLoadingStateChanged(bool isLoading)
     {
-        IsVisible = true;
+        IsVisible = isLoading;
         StateHasChanged();
     }
 
-    public void HideSpinner()
+    public void Dispose()
     {
-        IsVisible = false;
-        StateHasChanged();
+        ServiceCaller.OnLoadingStateChanged -= HandleLoadingStateChanged;
     }
 }

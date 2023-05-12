@@ -12,6 +12,5 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.
 builder.Services.AddMudServices();
 
 builder.Services.AddScoped<IServiceCaller, ServiceCaller>();
-builder.Services.AddSingleton<ISpinnerService, SpinnerService>();
 
 await builder.Build().RunAsync();

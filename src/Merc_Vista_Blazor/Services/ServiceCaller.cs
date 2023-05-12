@@ -1,15 +1,23 @@
 ﻿namespace Merc_Vista_Blazor.Services
 {
-    public class ServiceCaller: IServiceCaller
+    public class ServiceCaller : IServiceCaller
     {
-        private readonly IServiceProvider _services;
-        private readonly ISpinnerService _spinnerService;
+        public event Action<bool> OnLoadingStateChanged;
+        private bool isLoading = false;
 
-        public ServiceCaller(IServiceProvider services, ISpinnerService spinnerService)
+        private readonly IServiceProvider _services;
+
+        public bool IsLoading
         {
-            _services = services;
-            _spinnerService = spinnerService;
+            get { return isLoading; }
+            set
+            {
+                isLoading = value;
+                OnLoadingStateChanged?.Invoke(isLoading);
+            }
         }
+
+        public ServiceCaller(IServiceProvider services) => _services = services;
 
         public async Task<TResult> CallAsync<TService, TResult>(Func<TService, Task<TResult>> method) where TService : class
         {
@@ -17,13 +25,13 @@
 
             try
             {
-                _spinnerService.Show();
+                ShowLoading();
                 TResult serviceCallResult = await method(service);
                 return serviceCallResult;
             }
             finally
             {
-                _spinnerService.Hide();
+                HideLoading();
             }
         }
 
@@ -33,13 +41,19 @@
 
             try
             {
-                _spinnerService.Show();
+                ShowLoading();
                 await Task.Run(() => method(service).Invoke());
             }
             finally
             {
-                _spinnerService.Hide();
+                HideLoading();
             }
         }
+
+        public void ShowLoading() => IsLoading = true;
+
+        public void HideLoading() => IsLoading = false;
+
+        public void Dispose() => OnLoadingStateChanged = null;
     }
 }

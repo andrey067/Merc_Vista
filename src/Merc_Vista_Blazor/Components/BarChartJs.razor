@@ -5,7 +5,9 @@
 @using Merc_Vista_Blazor.Models;
 @using Drawing = System.Drawing;
 @using Color = System.Drawing.Color;
-@inject HttpClient httpClient;
+@using Merc_Vista_Blazor.Services;
+@inject IServiceCaller ServiceCaller;
+@inject IDialogService DialogService;
 
 @if (_config is not null)
 {
@@ -22,10 +24,27 @@
         if (ativos == null || ativos.Count() < 2)
             return;
 
-        var queryString = $"?ativosSelecionados={string.Join(",", ativos.Select(a => a))}&dataInicial={dateRangeSelecionado!.Start}&dataFinal={dateRangeSelecionado.End}&totalItensAmostrar={filtroQuantidadeDatas}";
-        var result = await httpClient.GetFromJsonAsync<ResultModel<ForcaRelativaModel>>($"ativos/calular-forca-relativa{queryString}");
+        var resultRequest = await ServiceCaller.CallAsync<HttpClient, HttpResponseMessage>(async httpClient =>
+                            {
+                                var queryString = $"?ativosSelecionados={string.Join(",", ativos.Select(a => a))}&dataInicial={dateRangeSelecionado!.Start}&dataFinal={dateRangeSelecionado.End}&totalItensAmostrar={filtroQuantidadeDatas}";
+                                return await httpClient.GetAsync($"ativos/calular-forca-relativa{queryString}");
+                            });
 
-        MontarChartJs(result.Data);
+
+        if (!resultRequest.IsSuccessStatusCode)
+        {
+            var parameters = new DialogParameters();
+            var errors = await resultRequest.Content.ReadFromJsonAsync<List<ErrorResponseModel>>();
+            var options = new DialogOptions { CloseOnEscapeKey = true };
+            parameters.Add("Errors", errors);
+            parameters.Add("Navigation", "carregar-arquivos");
+            DialogService.Show<ErrorDialog>("Erro", parameters, options);
+            return;
+
+        }
+
+        var resultConvet = await resultRequest.Content.ReadFromJsonAsync<ResultModel<ForcaRelativaModel>>();
+        MontarChartJs(resultConvet!.Data);
     }
 
     public void ApagarCharJs() => _config = null;
@@ -45,7 +64,7 @@
                     BorderWidth = 2
                 };
 
-            _config.Data.Datasets.Add(dataset);
+            _config!.Data.Datasets.Add(dataset);
         });
 
         forcaRelativaModels.XAxisLabelsDatas.ToList().ForEach(a => _config.Data.Labels.Add(a));

@@ -18,7 +18,7 @@
     <MudGrid Class="d-flex align-center">
         <MudItem xs="12" sm="6" md="4">
             <MudSelect T="string" Label="Selecione dois ou mais Ativos" OnClearButtonClick="LimparCampos" MultiSelection="true" AnchorOrigin="Origin.CenterRight" TransformOrigin="Origin.CenterRight" SelectedValuesChanged="LiberarFiltroDeDatas" @bind-Value="tituloSelecionado" Clearable>
-            @foreach (var state in ativosNomeSelect)
+                @foreach (var state in ativosNomeSelect)
                 {
                     <MudSelectItem T="string" Value="@state">@state</MudSelectItem>
                 }
@@ -78,18 +78,13 @@
 
         if (!resultRequest.IsSuccessStatusCode)
         {
-            var parameters = new DialogParameters();
-            var errors = await resultRequest.Content.ReadFromJsonAsync<List<ErrorResponseModel>>();
-            var options = new DialogOptions { CloseOnEscapeKey = true };
-            parameters.Add("Errors", errors);
-            parameters.Add("Navigation", "carregar-arquivos");
-            DialogService.Show<ErrorDialog>("Erro", parameters, options);
+            await HandleRequestError(resultRequest);
             return;
         }
 
         var resultConvet = await resultRequest.Content.ReadFromJsonAsync<ResultModel<TituloData>>();
-        ativosNomeSelect = resultConvet?.Data.Ativo;
-        dateRangeSelect = new DateRange(resultConvet?.Data.DataInicial, resultConvet?.Data.Datafinal);
+        ativosNomeSelect = resultConvet?.Data.Ativo ?? new List<string>();
+        dateRangeSelect = new DateRange(resultConvet?.Data.DataInicial, resultConvet?.Data.Datafinal ?? DateTime.MinValue);
         RangeDate = (dateRangeSelect.End - dateRangeSelect.Start)!.Value.Days;
     }
 
@@ -117,5 +112,16 @@
     private void AtualizarData(DateRange? dateRange)
     {
         dateRangeSelect = dateRange;
+        RangeDate = (dateRangeSelect.End - dateRangeSelect.Start)!.Value.Days;
+    }
+
+    private async Task HandleRequestError(HttpResponseMessage response)
+    {
+        var parameters = new DialogParameters();
+        var errors = await response.Content.ReadFromJsonAsync<List<ErrorResponseModel>>();
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        parameters.Add("Errors", errors);
+        parameters.Add("Navigation", "carregar-arquivos");
+        DialogService.Show<ErrorDialog>("Erro", parameters, options);
     }
 }
