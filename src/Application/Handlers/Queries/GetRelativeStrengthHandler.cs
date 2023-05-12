@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Application.Handlers.Queries
 {
-    public class GetRelativeStrengthHandler: IQueryHandler<GetRelativeStrengthQuery, GetRelativeStrengthResponse>
+    public class GetRelativeStrengthHandler : IQueryHandler<GetRelativeStrengthQuery, GetRelativeStrengthResponse>
     {
         private readonly IAcaoRepository _repository;
         private readonly IRelativeStrengthService _relativeStrengthService;
@@ -22,7 +22,7 @@ namespace Application.Handlers.Queries
 
         public async Task<Result<GetRelativeStrengthResponse>> Handle(GetRelativeStrengthQuery request, CancellationToken cancellationToken)
         {
-            GetRelativeStrengthResponse result = new();
+            GetRelativeStrengthResponse getRelativeStrengthResponse = new();
             List<List<Acao>> listaAcoes = new List<List<Acao>>();
             var tasks = request.AtivosSelecionados.Select(async ativo =>
             {
@@ -30,11 +30,11 @@ namespace Application.Handlers.Queries
                                                         .And(a => a.Data >= request.DataInicial)
                                                         .And(a => a.Data <= request.DataFinal);
 
-                var result = await _repository.GetQueryable(query)
-                                                       .OrderByDescending(a => a.Data)
+                var searchResult = await _repository.GetQueryable(query)
+                                                       .OrderBy(a => a.Data)
                                                        .Take(request.TotalItensAmostrar)
                                                        .ToListAsync();
-                return result;
+                return searchResult;
             });
 
             listaAcoes.AddRange(await Task.WhenAll(tasks));
@@ -42,25 +42,19 @@ namespace Application.Handlers.Queries
             if (listaAcoes.Count() == 0)
                 return Result<GetRelativeStrengthResponse>.Failure(new Error("Erro", "Nenhum arquivo importado"));
 
-            if (_relativeStrengthService.VerificarQuantidadeDeElementos(listaAcoes))
-                return Result<GetRelativeStrengthResponse>.Failure(new Error("Erro", "Os titulos selecionados não contém o a mesma quantidade de items"));
-
-            if (_relativeStrengthService.VerificarDatas(listaAcoes))
-                return Result<GetRelativeStrengthResponse>.Failure(new Error("Erro", "Datas não compativeis"));
-
-            result.XAxisLabelsDatas = _relativeStrengthService.ObterLabel(listaAcoes);
+            getRelativeStrengthResponse.XAxisLabelsDatas = _relativeStrengthService.ObterLabel(listaAcoes);
 
             listaAcoes.ForEach(a =>
             {
-                var response = new ChartPropResponse()
+                var charPropResponse = new ChartPropResponse()
                 {
                     NomeAtivo = a.Select(s => string.IsNullOrEmpty(s.EmpresaNome) ? s.CodidoAcao : s.EmpresaNome).FirstOrDefault(""),
                     Valor = _relativeStrengthService.ObterValorDaAcao(a)
                 };
-                result.ChartProp.Add(response);
+                getRelativeStrengthResponse.ChartProp.Add(charPropResponse);
             });
 
-            return Result<GetRelativeStrengthResponse>.Success(result);
+            return Result<GetRelativeStrengthResponse>.Success(getRelativeStrengthResponse);
         }
     }
 }

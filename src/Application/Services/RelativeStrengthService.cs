@@ -3,10 +3,11 @@ using Domain;
 
 namespace Application.Services
 {
-    public class RelativeStrengthService: IRelativeStrengthService
+    public class RelativeStrengthService : IRelativeStrengthService
     {
         public List<string> ObterLabel(List<List<Acao>> listaAcoes)
             => listaAcoes.SelectMany(acoes => acoes)
+                         .OrderBy(a => a.Data)
                          .Select(acao => acao.Data!.ToString("dd/MM/yy"))
                          .Distinct()
                          .ToList();
@@ -37,18 +38,7 @@ namespace Application.Services
         {
             int tamanhoLista = listaAcoes.FirstOrDefault()?.Count ?? 0;
 
-            for (int i = 0; i < tamanhoLista; i++)
-            {
-                DateTime? dataComparar = listaAcoes[0][i].Data;
-
-                for (int j = 1; j < listaAcoes.Count; j++)
-                {
-                    if (listaAcoes[j][i].Data != dataComparar)
-                    {
-                        return true;
-                    }
-                }
-            }
+            listaAcoes.ForEach(acoes => acoes.Sort((a1, a2) => a1.Data.CompareTo(a2.Data)));         
 
             return false;
         }
