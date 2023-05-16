@@ -1,4 +1,5 @@
 ﻿using Application.Commands;
+using Domain.Enums;
 using Domain.Shared;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -18,7 +19,7 @@ namespace Presentation.Controllers
         [SwaggerOperation(Summary = "Faz upload de arquivos CSV de um diretório")]
         [SwaggerResponse(StatusCodes.Status200OK)]
         [SwaggerResponse(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<Result>> UploadCSVDiretory
+        public async Task<ActionResult> UploadCSVDiretory
         (
           [FromQuery(Name = "folderPath")]
           [SwaggerParameter("O caminho do diretório que contém os arquivos CSV a serem carregados.")]
@@ -49,12 +50,12 @@ namespace Presentation.Controllers
         public async Task<ActionResult<Result>> UploadCSVFileStreamZip()
         {
             if (!Request.HasFormContentType)
-                return BadRequest("A requisição não contém o formulário de dados.");
+                return BadRequest(Result.Failure(new Error(EnumErro.ApplicationError.ToString(), "A requisição não contém o formulário de dados.")));
 
             var form = await Request.ReadFormAsync();
 
             if (form.Files == null || form.Files.Count == 0)
-                return BadRequest("Nenhum arquivo foi enviado.");
+                return BadRequest(Result.Failure(new Error(EnumErro.ApplicationError.ToString(), "Nenhum arquivo foi enviado.")));
 
             var result = await Sender.Send(new UploadZipFileCommand(form));
 

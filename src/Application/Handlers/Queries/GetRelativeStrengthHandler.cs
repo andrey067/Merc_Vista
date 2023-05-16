@@ -2,6 +2,7 @@
 using Application.Query;
 using Application.Query.Responses;
 using Domain;
+using Domain.Enums;
 using Domain.Interfaces;
 using Domain.Shared;
 using LinqKit;
@@ -40,7 +41,7 @@ namespace Application.Handlers.Queries
             listaAcoes.AddRange(await Task.WhenAll(tasks));
 
             if (listaAcoes.Count() == 0)
-                return Result<GetRelativeStrengthResponse>.Failure(new Error("Erro", "Nenhum arquivo importado"));
+                return Result<GetRelativeStrengthResponse>.Failure(new Error(EnumErro.ApplicationError.ToString(), "Nenhum arquivo importado"));
 
             getRelativeStrengthResponse.XAxisLabelsDatas = _relativeStrengthService.ObterLabel(listaAcoes);
 

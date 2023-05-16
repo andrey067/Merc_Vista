@@ -2,6 +2,7 @@
 using Application.Query;
 using Application.Query.Responses;
 using Dasync.Collections;
+using Domain.Enums;
 using Domain.Interfaces;
 using Domain.Shared;
 using Microsoft.EntityFrameworkCore;
@@ -28,7 +29,7 @@ namespace Application.Handlers.Queries
                 return Result<GetTitilesDatesResponse>.Success(response);
             }
 
-            return Result<GetTitilesDatesResponse>.Failure(new Error("Erro", "Não foram carregados Titulos"));
+            return Result<GetTitilesDatesResponse>.Failure(new Error(EnumErro.ApplicationError.ToString(), "Não foram carregados Titulos"));
         }
     }
 }
