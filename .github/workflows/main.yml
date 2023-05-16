@@ -1,4 +1,4 @@
-name: WebApiGames # Nome do workflow.
+name: Merc_Vista_Api # Nome do workflow.
 on:
   push:
     branches:
