@@ -1,9 +1,6 @@
 ﻿using Application.Query;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Presentation.Dtos;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace Presentation.Controllers
 {
