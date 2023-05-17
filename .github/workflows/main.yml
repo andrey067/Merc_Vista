@@ -2,30 +2,24 @@ name: Merc_Vista_Api # Nome do workflow.
 on:
   push:
     branches:
-      - master # Ação de push apenas na branch "master"
+      - master
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2 # Verificar a branch atual
-    - name: Configurar .NET Core
-      uses: actions/setup-dotnet@v1 # Configurar o .NET Core
+    - uses: actions/checkout@v2
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 6.0.x # Alterar para a versão desejada do .NET Core 6.0
-    - name: Restaurar pacotes NuGet
-      run: dotnet restore
-    - name: Compilar com dotnet
-      run: dotnet build --configuration Release 
-    - name: Publicar WebAPI usando dotnet 
-      # Criar pasta de saída "dist" da WebAPI no diretório do projeto
-      run: dotnet publish -c Release --no-build -o publishoutput # Não construir novamente, apenas publicar
-    - name: Publicar WebAPI gerada no Netlify
-      if: github.ref == 'refs/heads/master' # Executar este passo apenas na branch "master"
-      uses: netlify/actions/cli@master # Usar ações da CLI do Netlify
-      env: # Essas são as variáveis de ambiente adicionadas no GitHub Secrets para este repositório
+        dotnet-version: 6.0.x
+    - name: Build and publish Web API
+      run: dotnet publish -c Release -o publishoutput
+    - name: Deploy to Netlify
+      uses: netlify/actions/cli@master
+      env:
         NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
         NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
       with:
-        args: deploy --dir=publishoutput --prod # Enviar esta pasta para o Netlify
+        args: deploy --dir=publishoutput --prod
         secrets: '["NETLIFY_AUTH_TOKEN", "NETLIFY_SITE_ID"]'
