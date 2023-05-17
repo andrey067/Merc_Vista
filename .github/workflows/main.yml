@@ -1,25 +1,25 @@
-name: Merc_Vista_Api # Nome do workflow.
+name: Deploy to Netlify
+
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@v2
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 6.0.x
-    - name: Build and publish Web API
-      run: dotnet publish -c Release -o publishoutput
-    - name: Deploy to Netlify
-      uses: netlify/actions/cli@master
-      env:
-        NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-        NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-      with:
-        args: deploy --dir=publishoutput --prod
-        secrets: '["NETLIFY_AUTH_TOKEN", "NETLIFY_SITE_ID"]'
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Build and publish
+        run: |
+          dotnet build --configuration Release
+          dotnet publish --configuration Release --output ./publish
+
+      - name: Deploy to Netlify
+        uses: nwtgck/actions-netlify@v2
+        with:
+          publish-dir: ./publish
+          github-token: ${{ secrets.GITHUB_TOKEN }}
