@@ -11,15 +11,18 @@ namespace Presentation.Controllers
         public AtivosController(ISender sender) : base(sender) { }
 
         [HttpGet("calular-forca-relativa")]
-        public async Task<IActionResult> GetAtivosSelecionados([FromQuery] DateTime dataInicial,
-                                                               [FromQuery] DateTime dataFinal,
+        public async Task<IActionResult> GetAtivosSelecionados([FromQuery] string dataInicial,
+                                                               [FromQuery] string dataFinal,
                                                                [FromQuery] string ativosSelecionados,
                                                                [FromQuery] int totalItensAmostrar)
         {
+            var t1 = DateTime.Parse(dataInicial);
+            var t2 = DateTime.Parse(dataFinal);
+
             var ativos = ativosSelecionados.Split(',').ToList();
             var result = await Sender.Send(new GetRelativeStrengthQuery(ativos,
-                                                                        dataInicial,
-                                                                        dataFinal,
+                                                                        t1,
+                                                                        t2,
                                                                         totalItensAmostrar != 0 ? totalItensAmostrar : default));
 
             return result.IsSuccess ? Ok(result) : BadRequest(result.Errors);
